@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+        <AnalysisLevel>latest-recommended</AnalysisLevel>
+        <!-- CA1707: underscores are required by the MethodName_State_Behavior test naming convention. -->
+        <NoWarn>$(NoWarn);CA1707</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\src\Snail.Toolkit.AI.Ollama.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0"/>
+        <PackageReference Include="xunit" Version="2.9.3"/>
+        <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Xunit"/>
+    </ItemGroup>
+
+</Project>
