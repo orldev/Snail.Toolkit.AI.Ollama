@@ -216,6 +216,11 @@ if (model?.Supports("decision") is true)
 
 `ShowAsync` also reports the context window (`ContextLength`), the think values a model accepts (`Thinking`) and its template.
 
+The window is read from the key named after `general.architecture` first, then from any `*.context_length`: Ollama sorts
+`model_info` keys, and a projector's window can sort ahead of the model's own. Capabilities are advisory and read
+leniently — an entry that is not a name is skipped, and a value that is not a list reads as `null` — so one odd entry
+never costs you the window, the template and the think values of the same answer.
+
 ## Buffering for UIs
 
 Token-by-token updates are often too chatty to render. Coalesce them:

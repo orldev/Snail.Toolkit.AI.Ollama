@@ -102,6 +102,68 @@ public class ModelsClientTests
     }
 
     /// <summary>
+    /// Capabilities are advisory: an entry that is not a name is skipped, and the rest of the description still reads.
+    /// </summary>
+    [Fact]
+    public async Task ShowAsync_CapabilityThatIsNotAName_SkipsItAndReadsTheRest()
+    {
+        var client = CreateClient("/api/show", """
+            {"capabilities":["completion",7,"tools",null,{"kind":"vision"}],
+             "model_info":{"general.architecture":"qwen35moe","qwen35moe.context_length":262144}}
+            """);
+
+        var description = await client.ShowAsync("qwen");
+
+        Assert.Equal(["completion", "tools"], description!.Capabilities);
+        Assert.Equal(262144, description.ContextLength);
+    }
+
+    /// <summary>
+    /// Capabilities that are not a list say nothing about the model; they do not cost the caller its window and template.
+    /// </summary>
+    [Fact]
+    public async Task ShowAsync_CapabilitiesNotAList_ReadsThemAsUnknown()
+    {
+        var client = CreateClient("/api/show", """
+            {"capabilities":"tools","template":"{{ .Prompt }}",
+             "model_info":{"general.architecture":"gemma3","gemma3.context_length":32768}}
+            """);
+
+        var description = await client.ShowAsync("gemma3");
+
+        Assert.Null(description!.Capabilities);
+        Assert.False(description.Supports("tools"));
+        Assert.Equal(32768, description.ContextLength);
+        Assert.Equal("{{ .Prompt }}", description.Template);
+    }
+
+    /// <summary>
+    /// Ollama writes model_info with sorted keys, so a projector's window can come first; the architecture names the model's own.
+    /// </summary>
+    [Fact]
+    public async Task ShowAsync_SeveralContextLengths_ReadsTheArchitecturesOwn()
+    {
+        var client = CreateClient("/api/show", """
+            {"model_info":{"clip.context_length":4096,"general.architecture":"qwen25vl","qwen25vl.context_length":128000}}
+            """);
+
+        Assert.Equal(128000, (await client.ShowAsync("qwen2.5vl"))!.ContextLength);
+    }
+
+    /// <summary>
+    /// An architecture whose own key is missing still has a window somewhere; the model reads as unfamiliar, not blind.
+    /// </summary>
+    [Fact]
+    public async Task ShowAsync_ArchitectureWithoutItsOwnKey_ReadsAnyContextLength()
+    {
+        var client = CreateClient("/api/show", """
+            {"model_info":{"general.architecture":"something-new","something-else.context_length":16384}}
+            """);
+
+        Assert.Equal(16384, (await client.ShowAsync("new"))!.ContextLength);
+    }
+
+    /// <summary>
     /// A model the server does not have is an ordinary answer to "what is this model", not a failure.
     /// </summary>
     [Fact]

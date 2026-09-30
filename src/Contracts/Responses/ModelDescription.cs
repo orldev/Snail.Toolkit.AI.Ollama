@@ -16,7 +16,7 @@ namespace Snail.Toolkit.AI.Ollama.Contracts.Responses;
 /// <param name="ModelInfo">Architecture metadata keyed like "gemma3.context_length".</param>
 /// <param name="Thinking">The think values the model accepts, for thinking models that declare them.</param>
 public sealed record ModelDescription(
-    [property: JsonPropertyName("capabilities")] IReadOnlyList<string>? Capabilities,
+    [property: JsonPropertyName("capabilities"), JsonConverter(typeof(CapabilityNamesConverter))] IReadOnlyList<string>? Capabilities,
     [property: JsonPropertyName("details")] ModelDetails? Details,
     [property: JsonPropertyName("modified_at")] DateTimeOffset? ModifiedAt,
     [property: JsonPropertyName("parameters")] string? Parameters,
@@ -38,17 +38,33 @@ public sealed record ModelDescription(
     /// <summary>
     /// The trained context window in tokens, read from the architecture metadata; null when not reported.
     /// </summary>
+    /// <remarks>
+    /// The key is named after the architecture in "general.architecture", so that one is read first. Ollama writes
+    /// model_info with sorted keys, and a multimodal model can carry a projector's window that sorts ahead of the
+    /// model's own. An architecture whose own key is missing falls back to any "*.context_length": an unfamiliar
+    /// architecture should leave the window unknown only when no window is reported at all.
+    /// </remarks>
     public int? ContextLength
     {
         get
         {
-            var entry = ModelInfo?.FirstOrDefault(pair => pair.Key.EndsWith(".context_length", StringComparison.Ordinal));
+            if (ModelInfo is null)
+                return null;
 
-            return entry?.Value is { ValueKind: JsonValueKind.Number } length && length.TryGetInt32(out int tokens)
-                ? tokens
-                : null;
+            if (ModelInfo.TryGetValue("general.architecture", out var architecture)
+                && architecture.ValueKind is JsonValueKind.String
+                && Tokens(ModelInfo.GetValueOrDefault($"{architecture.GetString()}.context_length")) is { } own)
+                return own;
+
+            return ModelInfo
+                .Where(pair => pair.Key.EndsWith(".context_length", StringComparison.Ordinal))
+                .Select(pair => Tokens(pair.Value))
+                .FirstOrDefault(tokens => tokens is not null);
         }
     }
+
+    private static int? Tokens(JsonElement length) =>
+        length is { ValueKind: JsonValueKind.Number } && length.TryGetInt32(out int tokens) ? tokens : null;
 }
 
 /// <summary>
