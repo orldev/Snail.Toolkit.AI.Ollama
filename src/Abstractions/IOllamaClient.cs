@@ -1,7 +1,8 @@
 namespace Snail.Toolkit.AI.Ollama.Abstractions;
 
 /// <summary>
-/// Unified entry point: chat, embeddings and single-shot generation behind one dependency.
+/// Unified entry point: chat, embeddings, single-shot generation, System One scoring and model queries
+/// behind one dependency.
 /// </summary>
 public interface IOllamaClient
 {
@@ -19,4 +20,14 @@ public interface IOllamaClient
     /// One-off prompt completion without conversation history.
     /// </summary>
     IGenerateClient Generate { get; }
+
+    /// <summary>
+    /// Choice, yes/no and score questions answered as probabilities by a local System One model.
+    /// </summary>
+    ISystemOneClient SystemOne { get; }
+
+    /// <summary>
+    /// The server's version and its models: on disk, in memory, and what each can do.
+    /// </summary>
+    IModelsClient Models { get; }
 }

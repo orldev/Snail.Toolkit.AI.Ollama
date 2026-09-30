@@ -54,6 +54,14 @@ public static class ServiceCollectionExtensions
                 .ConfigurePrimaryHttpMessageHandler(CreateStreamingSafeHandler)
                 .AddRetriesForIdempotentCalls();
 
+            services.AddHttpClient<ISystemOneClient, SystemOneClient>(ConfigureTransport)
+                .ConfigurePrimaryHttpMessageHandler(CreateStreamingSafeHandler)
+                .AddRetriesForIdempotentCalls();
+
+            services.AddHttpClient<IModelsClient, ModelsClient>(ConfigureTransport)
+                .ConfigurePrimaryHttpMessageHandler(CreateStreamingSafeHandler)
+                .AddRetriesForIdempotentCalls();
+
             services.AddTransient<IOllamaClient, OllamaClient>();
 
             return services;
@@ -94,8 +102,8 @@ public static class ServiceCollectionExtensions
     };
 
     /// <summary>
-    /// Embeddings are the only idempotent calls — chat and generation stream, and a retry would
-    /// replay a half-consumed generation.
+    /// Embeddings, System One scoring and model queries are the only idempotent calls — chat and
+    /// generation stream, and a retry would replay a half-consumed generation.
     /// </summary>
     /// <remarks>
     /// OllamaOptions.Timeout is the budget of the whole call, retries included, so every resilience timeout

@@ -3,12 +3,14 @@ using Snail.Toolkit.AI.Ollama.Abstractions;
 namespace Snail.Toolkit.AI.Ollama.Clients;
 
 /// <summary>
-/// Facade uniting the three specialized clients behind one injectable entry point.
+/// Facade uniting the specialized clients behind one injectable entry point.
 /// </summary>
 public class OllamaClient(
     IChatClient chatClient,
     IEmbeddingsClient embeddingsClient,
-    IGenerateClient generateClient)
+    IGenerateClient generateClient,
+    ISystemOneClient systemOneClient,
+    IModelsClient modelsClient)
     : IOllamaClient
 {
     /// <inheritdoc />
@@ -19,4 +21,10 @@ public class OllamaClient(
 
     /// <inheritdoc />
     public IGenerateClient Generate { get; } = generateClient;
+
+    /// <inheritdoc />
+    public ISystemOneClient SystemOne { get; } = systemOneClient;
+
+    /// <inheritdoc />
+    public IModelsClient Models { get; } = modelsClient;
 }
