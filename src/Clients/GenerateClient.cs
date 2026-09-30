@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Snail.Toolkit.AI.Ollama.Abstractions;
+using Snail.Toolkit.AI.Ollama.Clients.Extensions;
 using Snail.Toolkit.AI.Ollama.Contracts.Requests;
 using Snail.Toolkit.AI.Ollama.Contracts.Responses;
 using Snail.Toolkit.AI.Ollama.Contracts.Schema;
@@ -13,22 +14,23 @@ namespace Snail.Toolkit.AI.Ollama.Clients;
 public class GenerateClient(HttpClient httpClient)
     : TypedHttpClientBase(httpClient), IGenerateClient
 {
-    private const string GenerateEndpoint = "/api/generate";
+    private const string GenerateEndpoint = "api/generate";
 
     /// <inheritdoc />
+    /// <exception cref="InvalidOperationException">Thrown when Ollama reports a failure inside the stream.</exception>
+    /// <exception cref="IOException">Thrown when the stream ends before its final chunk.</exception>
     public async IAsyncEnumerable<StreamChunk> StreamAsync(
         GenerateRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var chunk in Post(GenerateEndpoint)
-                           .AsJson(request)
-                           .SendAsNdjsonAsync<GenerateResponse>(cancellationToken)
-                           .ConfigureAwait(false))
+        var chunks = Post(GenerateEndpoint)
+            .AsJson(request, Wire.Json)
+            .SendAsNdjsonAsync<GenerateResponse>(cancellationToken)
+            .UntilDoneAsync(cancellationToken);
+
+        await foreach (var chunk in chunks.ConfigureAwait(false))
         {
             yield return new StreamChunk(chunk.Model, chunk.Response, chunk.Done);
-
-            if (chunk.Done)
-                yield break;
         }
     }
 }

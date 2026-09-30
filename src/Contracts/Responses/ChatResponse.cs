@@ -8,6 +8,10 @@ namespace Snail.Toolkit.AI.Ollama.Contracts.Responses;
 /// </summary>
 internal record ChatResponse : ResponseBase
 {
+    /// <remarks>
+    /// Not required: a mid-stream {"error": ...} line carries no message, and failing its deserialization
+    /// would hide Ollama's own explanation behind a missing-property error.
+    /// </remarks>
     [JsonPropertyName("message")]
-    public required Message Message { get; init; }
+    public Message Message { get; init; } = new("assistant", string.Empty, null, null, null);
 }

@@ -33,10 +33,14 @@ public abstract record RequestBase(string Model)
     public ModelOptions? Options { get; set; }
 
     /// <summary>
-    /// How long the model stays loaded after the request, e.g. "5m".
+    /// How long the model stays loaded after the request: "10m", "0" to unload at once, "-1m" to keep it.
     /// </summary>
+    /// <remarks>
+    /// Null leaves the server's OLLAMA_KEEP_ALIVE in charge; a hardcoded default here overrode whatever
+    /// the operator had configured on every single request.
+    /// </remarks>
     [JsonPropertyName("keep_alive")]
-    public string? KeepAlive { get; set; } = "5m";
+    public string? KeepAlive { get; set; }
 
     /// <summary>
     /// Reasoning control for thinking-capable models: a boolean, or an effort level

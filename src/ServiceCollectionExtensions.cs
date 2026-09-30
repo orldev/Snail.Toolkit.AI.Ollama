@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using Snail.Toolkit.AI.Ollama.Abstractions;
 using Snail.Toolkit.AI.Ollama.Clients;
@@ -64,11 +65,15 @@ public static class ServiceCollectionExtensions
     /// mid-generation. Time limits live in ConnectTimeout, the per-request
     /// OllamaOptions.Timeout and the caller's token.
     /// </summary>
+    /// <remarks>
+    /// The base address always ends in a slash and endpoints are relative, so Ollama published under a
+    /// proxy prefix such as https://gateway/ollama keeps the prefix instead of losing it to "/api/chat".
+    /// </remarks>
     private static void ConfigureTransport(IServiceProvider provider, HttpClient client)
     {
         var options = provider.GetRequiredService<IOptions<OllamaOptions>>().Value;
 
-        client.BaseAddress = new Uri(options.BaseUrl);
+        client.BaseAddress = new Uri(options.BaseUrl.EndsWith('/') ? options.BaseUrl : $"{options.BaseUrl}/");
         client.Timeout = Timeout.InfiniteTimeSpan;
 
         if (!string.IsNullOrEmpty(options.ApiKey))
@@ -89,14 +94,39 @@ public static class ServiceCollectionExtensions
     };
 
     /// <summary>
-    /// Embeddings are the only idempotent calls — chat and generation stream, and a retry
-    /// would replay a half-consumed generation. Budgets are sized for slow local models.
+    /// Embeddings are the only idempotent calls — chat and generation stream, and a retry would
+    /// replay a half-consumed generation.
     /// </summary>
+    /// <remarks>
+    /// OllamaOptions.Timeout is the budget of the whole call, retries included, so every resilience timeout
+    /// is derived from it. Fixed budgets contradicted it: a 2-minute attempt under a 100-second call could
+    /// never be retried, and a 5-minute total silently capped any Timeout set above it. An attempt may use
+    /// the full budget because a slow local model is still working — only a fast failure is worth another
+    /// try. The circuit breaker must sample at least two attempts' worth of time.
+    /// </remarks>
     private static void AddRetriesForIdempotentCalls(this IHttpClientBuilder builder) =>
-        builder.AddStandardResilienceHandler(resilience =>
+        builder.AddStandardResilienceHandler().Configure((resilience, provider) =>
         {
-            resilience.AttemptTimeout.Timeout = TimeSpan.FromMinutes(2);
-            resilience.CircuitBreaker.SamplingDuration = TimeSpan.FromMinutes(4);
-            resilience.TotalRequestTimeout.Timeout = TimeSpan.FromMinutes(5);
+            TimeSpan budget = CallBudget(provider.GetRequiredService<IOptions<OllamaOptions>>().Value.Timeout);
+
+            resilience.TotalRequestTimeout.Timeout = budget;
+            resilience.AttemptTimeout.Timeout = budget;
+            resilience.CircuitBreaker.SamplingDuration = budget * 2;
         });
+
+    /// <summary>
+    /// The configured timeout, held inside the ranges Polly validates: an infinite or oversized timeout
+    /// becomes 12 hours, anything shorter than a second becomes one second.
+    /// </summary>
+    private static TimeSpan CallBudget(TimeSpan timeout)
+    {
+        TimeSpan longest = TimeSpan.FromHours(12);
+
+        if (timeout == Timeout.InfiniteTimeSpan || timeout > longest)
+        {
+            return longest;
+        }
+
+        return timeout < TimeSpan.FromSeconds(1) ? TimeSpan.FromSeconds(1) : timeout;
+    }
 }

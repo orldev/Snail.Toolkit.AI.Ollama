@@ -43,4 +43,10 @@ internal abstract record ResponseBase
 
     [JsonPropertyName("logprobs")]
     public IEnumerable<LogProbResult>? LogProbs { get; init; }
+
+    /// <summary>
+    /// A failure Ollama hit after the 200 headers were sent, reported as a line of the stream itself.
+    /// </summary>
+    [JsonPropertyName("error")]
+    public string? Error { get; init; }
 }

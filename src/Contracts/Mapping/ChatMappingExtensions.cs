@@ -34,6 +34,9 @@ internal static class ChatMappingExtensions
             Options = options?.ToInternalOptions(),
             Tools = options?.Tools?.OfType<AIFunction>().Select(f => f.ToInternalTool()),
             Think = options?.AdditionalProperties?.GetValueOrDefault("think"),
+            KeepAlive = options?.AdditionalProperties?.TryGetValue("keep_alive", out string? keepAlive) is true
+                ? keepAlive
+                : null,
             Format = options?.ResponseFormat switch
             {
                 ChatResponseFormatJson { Schema: { } schema } => schema,
@@ -118,7 +121,7 @@ internal static class ChatMappingExtensions
         MaxTokens = options.MaxOutputTokens,
         TopP = options.TopP,
         TopK = options.TopK,
-        Seed = (int?)options.Seed,
+        Seed = options.Seed,
         Stop = options.StopSequences is { Count: > 0 } stops ? [.. stops] : null,
         PresencePenalty = options.PresencePenalty,
         FrequencyPenalty = options.FrequencyPenalty,

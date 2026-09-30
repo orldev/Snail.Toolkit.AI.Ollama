@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
+using Snail.Toolkit.AI.Ollama.Clients.Extensions;
 using Snail.Toolkit.AI.Ollama.Configuration;
 using Snail.Toolkit.AI.Ollama.Contracts.Mapping;
 using Snail.Toolkit.HttpBuilder.Extensions;
@@ -25,7 +26,7 @@ public class ChatClient(HttpClient httpClient, IOptions<OllamaOptions> options)
         providerUri: Uri.TryCreate(options.Value.BaseUrl, UriKind.Absolute, out var uri) ? uri : null,
         defaultModelId: options.Value.DefaultModel);
 
-    private const string ChatEndpoint = "/api/chat";
+    private const string ChatEndpoint = "api/chat";
 
     /// <exception cref="InvalidOperationException">Thrown when no model is configured anywhere.</exception>
     private string ResolveModel(ChatOptions? options) =>
@@ -33,19 +34,8 @@ public class ChatClient(HttpClient httpClient, IOptions<OllamaOptions> options)
         ?? throw new InvalidOperationException(
             "No model specified: set ChatOptions.ModelId or OllamaOptions.DefaultModel.");
 
-    /// <summary>
-    /// Bounds a unary call by OllamaOptions.Timeout — the HttpClient itself is unbounded
-    /// so that streams are never cut short.
-    /// </summary>
-    private CancellationTokenSource CreateUnaryTimeout(CancellationToken cancellationToken)
-    {
-        var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(_options.Timeout);
-
-        return timeout;
-    }
-
     /// <inheritdoc />
+    /// <exception cref="TimeoutException">Thrown when OllamaOptions.Timeout expires first.</exception>
     public async Task<Microsoft.Extensions.AI.ChatResponse> GetResponseAsync(
         IEnumerable<ChatMessage> messages, ChatOptions? options = null,
         CancellationToken cancellationToken = default)
@@ -53,11 +43,10 @@ public class ChatClient(HttpClient httpClient, IOptions<OllamaOptions> options)
         var request = messages.ToInternalRequest(options, ResolveModel(options));
         request.Stream = false;
 
-        using var timeout = CreateUnaryTimeout(cancellationToken);
-
-        var response = await Post(ChatEndpoint)
-                           .AsJson(request)
-                           .SendAsync<ChatResponse>(timeout.Token)
+        var response = await _options
+                           .WithinTimeoutAsync(
+                               token => Post(ChatEndpoint).AsJson(request, Wire.Json).SendAsync<ChatResponse>(token),
+                               cancellationToken)
                            .ConfigureAwait(false)
                        ?? throw new InvalidOperationException("Failed to deserialize the chat response.");
 
@@ -65,21 +54,22 @@ public class ChatClient(HttpClient httpClient, IOptions<OllamaOptions> options)
     }
 
     /// <inheritdoc />
+    /// <exception cref="InvalidOperationException">Thrown when Ollama reports a failure inside the stream.</exception>
+    /// <exception cref="IOException">Thrown when the stream ends before its final chunk.</exception>
     public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
         IEnumerable<ChatMessage> messages, ChatOptions? options = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var request = messages.ToInternalRequest(options, ResolveModel(options));
 
-        await foreach (var chunk in Post(ChatEndpoint)
-                           .AsJson(request)
-                           .SendAsNdjsonAsync<ChatResponse>(cancellationToken)
-                           .ConfigureAwait(false))
+        var chunks = Post(ChatEndpoint)
+            .AsJson(request, Wire.Json)
+            .SendAsNdjsonAsync<ChatResponse>(cancellationToken)
+            .UntilDoneAsync(cancellationToken);
+
+        await foreach (var chunk in chunks.ConfigureAwait(false))
         {
             yield return chunk.ToAiUpdate();
-
-            if (chunk.Done)
-                yield break;
         }
     }
 

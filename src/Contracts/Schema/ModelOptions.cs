@@ -22,8 +22,12 @@ public record ModelOptions
     /// <summary>
     /// Fixed seed for reproducible generations.
     /// </summary>
+    /// <remarks>
+    /// A long, as in MEAI's ChatOptions.Seed and Ollama's 64-bit seed: narrowing to int wrapped any seed
+    /// above int.MaxValue silently into a different one.
+    /// </remarks>
     [JsonPropertyName("seed")]
-    public int? Seed { get; init; }
+    public long? Seed { get; init; }
 
     /// <summary>
     /// Maximum tokens to generate — Ollama's "num_predict".

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
 using Snail.Toolkit.AI.Ollama.Abstractions;
+using Snail.Toolkit.AI.Ollama.Clients.Extensions;
 using Snail.Toolkit.AI.Ollama.Configuration;
 using Snail.Toolkit.AI.Ollama.Contracts.Requests;
 using Snail.Toolkit.AI.Ollama.Contracts.Responses;
@@ -21,33 +22,19 @@ public class EmbeddingsClient(HttpClient httpClient, IOptions<OllamaOptions> opt
         providerUri: Uri.TryCreate(options.Value.BaseUrl, UriKind.Absolute, out var uri) ? uri : null,
         defaultModelId: options.Value.DefaultModel);
 
-    private const string EmbedEndpoint = "/api/embed";
-
-    /// <summary>
-    /// Bounds a unary call by OllamaOptions.Timeout — the HttpClient itself is unbounded
-    /// so that streams are never cut short.
-    /// </summary>
-    private CancellationTokenSource CreateUnaryTimeout(CancellationToken cancellationToken)
-    {
-        var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(_options.Timeout);
-
-        return timeout;
-    }
+    private const string EmbedEndpoint = "api/embed";
 
     /// <exception cref="HttpBuilderException">Thrown when the API call returns a non-success status code.</exception>
+    /// <exception cref="TimeoutException">Thrown when OllamaOptions.Timeout expires first.</exception>
     public async Task<EmbeddingsResponse> GenerateAsync(
         EmbeddingsRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        using var timeout = CreateUnaryTimeout(cancellationToken);
-
-        return await Post(EmbedEndpoint)
-                   .AsJson(request)
-                   .SendAsync<EmbeddingsResponse>(timeout.Token)
-                   .ConfigureAwait(false)
-               ?? throw new InvalidOperationException("Failed to deserialize the embeddings response.");
-    }
+        CancellationToken cancellationToken = default) =>
+        await _options
+            .WithinTimeoutAsync(
+                token => Post(EmbedEndpoint).AsJson(request, Wire.Json).SendAsync<EmbeddingsResponse>(token),
+                cancellationToken)
+            .ConfigureAwait(false)
+        ?? throw new InvalidOperationException("Failed to deserialize the embeddings response.");
 
     /// <summary>
     /// MEAI path: the model falls back to the configured default, usage comes from
