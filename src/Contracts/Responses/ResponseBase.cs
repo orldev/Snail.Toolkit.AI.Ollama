@@ -32,6 +32,12 @@ internal abstract record ResponseBase
     [JsonPropertyName("prompt_eval_count")]
     public int? PromptEvalCount { get; init; }
 
+    /// <summary>
+    /// Prompt tokens served from the KV cache instead of being evaluated again.
+    /// </summary>
+    [JsonPropertyName("prompt_eval_cached_count")]
+    public int? PromptEvalCachedCount { get; init; }
+
     [JsonPropertyName("prompt_eval_duration")]
     public long? PromptEvalDuration { get; init; }
 
@@ -42,7 +48,7 @@ internal abstract record ResponseBase
     public long? EvalDuration { get; init; }
 
     [JsonPropertyName("logprobs")]
-    public IEnumerable<LogProbResult>? LogProbs { get; init; }
+    public IReadOnlyList<LogProbResult>? LogProbs { get; init; }
 
     /// <summary>
     /// A failure Ollama hit after the 200 headers were sent, reported as a line of the stream itself.

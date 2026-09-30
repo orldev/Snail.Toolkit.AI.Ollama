@@ -28,15 +28,22 @@ internal static class ChatMappingExtensions
         }
 
         var toolNamesByCallId = MapToolNamesByCallId(history);
+        var conversation = history.SelectMany(m => m.ToInternalMessages(toolNamesByCallId));
 
-        return new Requests.ChatRequest(model, history.SelectMany(m => m.ToInternalMessages(toolNamesByCallId)))
+        return new Requests.ChatRequest(model, [.. options.ToInstructionMessages(), .. conversation])
         {
             Options = options?.ToInternalOptions(),
-            Tools = options?.Tools?.OfType<AIFunction>().Select(f => f.ToInternalTool()),
-            Think = options?.AdditionalProperties?.GetValueOrDefault("think"),
+            Tools = options?.ToolMode is NoneChatToolMode
+                ? null
+                : options?.Tools?.OfType<AIFunction>().Select(f => f.ToInternalTool()),
+            Think = options.ToThink(),
             KeepAlive = options?.AdditionalProperties?.TryGetValue("keep_alive", out string? keepAlive) is true
                 ? keepAlive
                 : null,
+            TopLogProbs = options.ToTopLogProbs(),
+            LogProbs = options?.AdditionalProperties?.TryGetValue("logprobs", out bool logProbs) is true
+                ? logProbs
+                : options.ToTopLogProbs() is not null ? true : null,
             Format = options?.ResponseFormat switch
             {
                 ChatResponseFormatJson { Schema: { } schema } => schema,
@@ -45,6 +52,48 @@ internal static class ChatMappingExtensions
             }
         };
     }
+
+    /// <summary>
+    /// Per-request instructions travel as a leading system message: Ollama has no field of their own.
+    /// </summary>
+    private static IEnumerable<Schema.ChatMessage> ToInstructionMessages(this ChatOptions? options) =>
+        options?.Instructions is { Length: > 0 } instructions
+            ? [new Schema.ChatMessage(Role: "system", Content: instructions)]
+            : [];
+
+    /// <summary>
+    /// An explicit AdditionalProperties["think"] wins; otherwise the MEAI reasoning effort picks the level.
+    /// </summary>
+    /// <remarks>
+    /// Measured on Ollama 0.35.0: a model whose /api/show lists only [false, true] still accepts "low",
+    /// "medium" and "max" and simply thinks, while a model without the thinking capability rejects any
+    /// think value with 400 — so nothing is sent unless the caller asked for reasoning.
+    /// </remarks>
+    private static object? ToThink(this ChatOptions? options) =>
+        options?.AdditionalProperties?.GetValueOrDefault("think")
+        ?? options?.Reasoning?.Effort switch
+        {
+            ReasoningEffort.None => false,
+            ReasoningEffort.Low => "low",
+            ReasoningEffort.Medium => "medium",
+            ReasoningEffort.High => "high",
+            ReasoningEffort.ExtraHigh => "max",
+            _ => null
+        };
+
+    /// <summary>
+    /// Asking for alternatives implies asking for log probabilities, which Ollama otherwise leaves off.
+    /// </summary>
+    private static int? ToTopLogProbs(this ChatOptions? options) =>
+        options?.AdditionalProperties?.TryGetValue("top_logprobs", out int top) is true ? top : null;
+
+    /// <summary>
+    /// Log probabilities ride in AdditionalProperties["logprobs"]: MEAI has no typed slot for them.
+    /// </summary>
+    private static AdditionalPropertiesDictionary? ToAdditionalProperties(this Responses.ResponseBase response) =>
+        response.LogProbs is { Count: > 0 } logProbs
+            ? new AdditionalPropertiesDictionary { ["logprobs"] = logProbs }
+            : null;
 
     /// <summary>
     /// A tool result carries only the call id; the function name Ollama wants in tool_name
@@ -162,7 +211,8 @@ internal static class ChatMappingExtensions
             ResponseId = Guid.NewGuid().ToString(),
             CreatedAt = response.CreatedAt,
             FinishReason = response.ToFinishReason(),
-            Usage = response.ToUsageDetails()
+            Usage = response.ToUsageDetails(),
+            AdditionalProperties = response.ToAdditionalProperties()
         };
     }
 
@@ -176,7 +226,8 @@ internal static class ChatMappingExtensions
             Role = new ChatRole(response.Message.Role),
             ModelId = response.Model,
             CreatedAt = response.CreatedAt,
-            RawRepresentation = response
+            RawRepresentation = response,
+            AdditionalProperties = response.ToAdditionalProperties()
         };
 
         if (!string.IsNullOrEmpty(response.Message.Thinking))
@@ -218,12 +269,16 @@ internal static class ChatMappingExtensions
         _ => null
     };
 
-    private static UsageDetails? ToUsageDetails(this Responses.ResponseBase response) =>
+    /// <summary>
+    /// Token counters of a final chunk as MEAI usage; null when Ollama sent none.
+    /// </summary>
+    public static UsageDetails? ToUsageDetails(this Responses.ResponseBase response) =>
         response is { PromptEvalCount: null, EvalCount: null }
             ? null
             : new UsageDetails
             {
                 InputTokenCount = response.PromptEvalCount,
+                CachedInputTokenCount = response.PromptEvalCachedCount,
                 OutputTokenCount = response.EvalCount,
                 TotalTokenCount = (response.PromptEvalCount ?? 0) + (response.EvalCount ?? 0)
             };

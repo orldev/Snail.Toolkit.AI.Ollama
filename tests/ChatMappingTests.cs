@@ -350,4 +350,118 @@ public class ChatMappingTests
         var content = JsonDocument.Parse(toolMessage.GetProperty("content").GetString()!).RootElement;
         Assert.Equal(18, content.GetProperty("tempC").GetInt32());
     }
+
+    private static JsonElement Wire(ChatOptions options) =>
+        JsonSerializer.SerializeToElement(
+            new List<ChatMessage> { new(ChatRole.User, "hi") }.ToInternalRequest(options, "m"),
+            JsonSerializerOptions.Web);
+
+    [Theory]
+    [InlineData(ReasoningEffort.Low, "low")]
+    [InlineData(ReasoningEffort.Medium, "medium")]
+    [InlineData(ReasoningEffort.High, "high")]
+    [InlineData(ReasoningEffort.ExtraHigh, "max")]
+    public void ToInternalRequest_ReasoningEffort_SendsThinkLevel(ReasoningEffort effort, string level)
+    {
+        var json = Wire(new ChatOptions { Reasoning = new ReasoningOptions { Effort = effort } });
+
+        Assert.Equal(level, json.GetProperty("think").GetString());
+    }
+
+    [Fact]
+    public void ToInternalRequest_ReasoningEffortNone_TurnsThinkingOff()
+    {
+        var json = Wire(new ChatOptions { Reasoning = new ReasoningOptions { Effort = ReasoningEffort.None } });
+
+        Assert.False(json.GetProperty("think").GetBoolean());
+    }
+
+    [Fact]
+    public void ToInternalRequest_ExplicitThinkAndReasoning_ExplicitThinkWins()
+    {
+        var json = Wire(new ChatOptions
+        {
+            Reasoning = new ReasoningOptions { Effort = ReasoningEffort.High },
+            AdditionalProperties = new() { ["think"] = false }
+        });
+
+        Assert.False(json.GetProperty("think").GetBoolean());
+    }
+
+    /// <summary>
+    /// A model without the thinking capability answers 400 to any think value, so none may be sent unasked.
+    /// </summary>
+    [Fact]
+    public void ToInternalRequest_NoReasoningRequested_SendsNoThink()
+    {
+        var request = new List<ChatMessage> { new(ChatRole.User, "hi") }.ToInternalRequest(new ChatOptions(), "m");
+
+        Assert.Null(request.Think);
+    }
+
+    [Fact]
+    public void ToInternalRequest_Instructions_LeadAsSystemMessage()
+    {
+        var json = Wire(new ChatOptions { Instructions = "Answer in French." });
+
+        var first = json.GetProperty("messages")[0];
+        Assert.Equal("system", first.GetProperty("role").GetString());
+        Assert.Equal("Answer in French.", first.GetProperty("content").GetString());
+        Assert.Equal("user", json.GetProperty("messages")[1].GetProperty("role").GetString());
+    }
+
+    [Fact]
+    public void ToInternalRequest_ToolModeNone_SendsNoTools()
+    {
+        var request = new List<ChatMessage> { new(ChatRole.User, "hi") }.ToInternalRequest(new ChatOptions
+        {
+            Tools = [AIFunctionFactory.Create(() => "18C", "get_weather")],
+            ToolMode = ChatToolMode.None
+        }, "m");
+
+        Assert.Null(request.Tools);
+    }
+
+    [Fact]
+    public void ToAiResponse_CachedPrompt_ReportsCachedInputTokens()
+    {
+        var response = Deserialize("""
+            {"model":"m","message":{"role":"assistant","content":"ok"},"done":true,"done_reason":"stop",
+             "prompt_eval_count":40,"prompt_eval_cached_count":14,"eval_count":3}
+            """);
+
+        Assert.Equal(14, response.ToAiResponse().Usage!.CachedInputTokenCount);
+    }
+
+    [Fact]
+    public void ToInternalRequest_TopLogProbs_ImpliesLogProbs()
+    {
+        var json = Wire(new ChatOptions { AdditionalProperties = new() { ["top_logprobs"] = 3 } });
+
+        Assert.True(json.GetProperty("logprobs").GetBoolean());
+        Assert.Equal(3, json.GetProperty("top_logprobs").GetInt32());
+    }
+
+    [Fact]
+    public void ToAiResponse_LogProbsReturned_ExposedInAdditionalProperties()
+    {
+        var response = Deserialize("""
+            {"model":"m","message":{"role":"assistant","content":"Hi"},"done":true,"done_reason":"stop",
+             "logprobs":[{"token":"Hi","logprob":-0.69,"bytes":[72,105],
+               "top_logprobs":[{"token":"Hi","logprob":-0.69,"bytes":[72,105]},{"token":"Hello","logprob":-1.19}]}]}
+            """);
+
+        var logProbs = Assert.IsAssignableFrom<IReadOnlyList<Snail.Toolkit.AI.Ollama.Contracts.Schema.LogProbResult>>(
+            response.ToAiResponse().AdditionalProperties!["logprobs"]);
+        Assert.Equal("Hi", logProbs[0].Token);
+        Assert.Equal("Hello", logProbs[0].TopLogprobs![1].Token);
+    }
+
+    [Fact]
+    public void ToAiResponse_NoLogProbs_LeavesAdditionalPropertiesUnset()
+    {
+        var response = Deserialize("""{"model":"m","message":{"role":"assistant","content":"Hi"},"done":true}""");
+
+        Assert.Null(response.ToAiResponse().AdditionalProperties);
+    }
 }

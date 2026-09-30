@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using Snail.Toolkit.AI.Ollama.Abstractions;
 using Snail.Toolkit.AI.Ollama.Clients.Extensions;
+using Snail.Toolkit.AI.Ollama.Contracts.Mapping;
 using Snail.Toolkit.AI.Ollama.Contracts.Requests;
 using Snail.Toolkit.AI.Ollama.Contracts.Responses;
 using Snail.Toolkit.AI.Ollama.Contracts.Schema;
@@ -30,7 +31,7 @@ public class GenerateClient(HttpClient httpClient)
 
         await foreach (var chunk in chunks.ConfigureAwait(false))
         {
-            yield return new StreamChunk(chunk.Model, chunk.Response, chunk.Done);
+            yield return chunk.ToStreamChunk();
         }
     }
 }

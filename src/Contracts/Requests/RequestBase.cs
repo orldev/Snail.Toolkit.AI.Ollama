@@ -48,4 +48,17 @@ public abstract record RequestBase(string Model)
     /// </summary>
     [JsonPropertyName("think"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public object? Think { get; set; }
+
+    /// <summary>
+    /// True returns the log probability of every generated token.
+    /// </summary>
+    [JsonPropertyName("logprobs")]
+    public bool? LogProbs { get; set; }
+
+    /// <summary>
+    /// How many most-likely alternatives to report per token, from 0 to 20; needs <see cref="LogProbs"/>.
+    /// </summary>
+    /// <remarks>Ollama answers 400 above 20.</remarks>
+    [JsonPropertyName("top_logprobs")]
+    public int? TopLogProbs { get; set; }
 }

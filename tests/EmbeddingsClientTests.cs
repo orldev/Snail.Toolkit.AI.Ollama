@@ -71,4 +71,35 @@ public class EmbeddingsClientTests
         Assert.Equal("ollama", metadata.ProviderName);
         Assert.Equal("embed-model", metadata.DefaultModelId);
     }
+
+    [Fact]
+    public async Task GenerateAsync_DimensionsTruncateAndKeepAlive_ReachOllama()
+    {
+        var handler = new StubHandler("""{"model":"embed-model","embeddings":[[0.1]]}""");
+        using var client = CreateClient(handler);
+
+        await ((IEmbeddingGenerator<string, Embedding<float>>)client).GenerateAsync(["one"], new EmbeddingGenerationOptions
+        {
+            Dimensions = 256,
+            AdditionalProperties = new() { ["truncate"] = false, ["keep_alive"] = "0" }
+        });
+
+        var body = System.Text.Json.JsonDocument.Parse(handler.RequestBody!).RootElement;
+        Assert.Equal(256, body.GetProperty("dimensions").GetInt32());
+        Assert.False(body.GetProperty("truncate").GetBoolean());
+        Assert.Equal("0", body.GetProperty("keep_alive").GetString());
+    }
+
+    [Fact]
+    public async Task GenerateAsync_NothingSet_SendsNoOptionalFields()
+    {
+        var handler = new StubHandler("""{"model":"embed-model","embeddings":[[0.1]]}""");
+        using var client = CreateClient(handler);
+
+        await ((IEmbeddingGenerator<string, Embedding<float>>)client).GenerateAsync(["one"]);
+
+        Assert.DoesNotContain("dimensions", handler.RequestBody);
+        Assert.DoesNotContain("truncate", handler.RequestBody);
+        Assert.DoesNotContain("keep_alive", handler.RequestBody);
+    }
 }

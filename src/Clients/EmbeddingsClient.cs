@@ -50,8 +50,14 @@ public class EmbeddingsClient(HttpClient httpClient, IOptions<OllamaOptions> opt
             ?? throw new InvalidOperationException(
                 "No model specified: set EmbeddingGenerationOptions.ModelId or OllamaOptions.DefaultModel.");
 
-        var response = await GenerateAsync(new EmbeddingsRequest(model, values), cancellationToken)
-            .ConfigureAwait(false);
+        var request = new EmbeddingsRequest(model, values)
+        {
+            Dimensions = options?.Dimensions,
+            Truncate = options?.AdditionalProperties?.TryGetValue("truncate", out bool truncate) is true ? truncate : null,
+            KeepAlive = options?.AdditionalProperties?.TryGetValue("keep_alive", out string? keepAlive) is true ? keepAlive : null
+        };
+
+        var response = await GenerateAsync(request, cancellationToken).ConfigureAwait(false);
 
         var embeddings = new GeneratedEmbeddings<Embedding<float>>(
             response.Embeddings.Select(vector => new Embedding<float>(vector) { ModelId = response.Model }));
