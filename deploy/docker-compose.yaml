@@ -1,0 +1,30 @@
+services:
+  traefik:
+    image: traefik:v3.4
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # Read from deploy/.env; compose refuses to start without them
+      - OLLAMA_TOKEN=${OLLAMA_TOKEN:?set OLLAMA_TOKEN in deploy/.env}
+      - OLLAMA_DOMAIN=${OLLAMA_DOMAIN:?set OLLAMA_DOMAIN in deploy/.env}
+    volumes:
+      - ./letsencrypt:/letsencrypt
+      - ./dynamic.yml:/etc/traefik/dynamic.yml:ro
+    command:
+      # Provider: all routing lives in dynamic.yml
+      - "--providers.file.filename=/etc/traefik/dynamic.yml"
+      # Entry points
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # Redirect HTTP -> HTTPS
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      # Let's Encrypt
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:?set ACME_EMAIL in deploy/.env}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

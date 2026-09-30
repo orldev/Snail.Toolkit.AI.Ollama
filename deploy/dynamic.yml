@@ -1,0 +1,19 @@
+http:
+  routers:
+    ollama-router:
+      # Matches only requests carrying Authorization: Bearer <OLLAMA_TOKEN> — exactly what
+      # the client sends from OllamaOptions.ApiKey. Without the token no router matches: 404.
+      rule: 'Host(`{{ env "OLLAMA_DOMAIN" }}`) && Header(`Authorization`, `Bearer {{ env "OLLAMA_TOKEN" }}`)'
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      service: ollama-service
+
+  services:
+    ollama-service:
+      loadBalancer:
+        # Ollama on loopback answers 403 to a foreign Host; host.docker.internal is allowed
+        passHostHeader: false
+        servers:
+          - url: "http://host.docker.internal:11434"
