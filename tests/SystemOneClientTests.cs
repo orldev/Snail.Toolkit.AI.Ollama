@@ -80,6 +80,23 @@ public class SystemOneClientTests
         Assert.False(handler.RequestBody.TryGetProperty("stream", out _));
         Assert.False(handler.RequestBody.TryGetProperty("options", out _));
         Assert.False(handler.RequestBody.TryGetProperty("keep_alive", out _));
+        Assert.False(handler.RequestBody.TryGetProperty("images", out _));
+    }
+
+    [Fact]
+    public async Task AnswerAsync_Images_SentTopLevelInOrder()
+    {
+        var handler = new StubHandler(ChoiceResponse);
+        var client = CreateClient(handler);
+
+        await client.AnswerAsync(Ask("has_logo", new NoulQuestion("Does the image contain a logo?")) with
+        {
+            Images = ["iVBORw0KGgo=", "UklGRg=="]
+        });
+
+        var images = handler.RequestBody.GetProperty("images");
+        Assert.Equal(["iVBORw0KGgo=", "UklGRg=="], images.EnumerateArray().Select(image => image.GetString()));
+        Assert.False(handler.RequestBody.GetProperty("questions").GetProperty("has_logo").TryGetProperty("images", out _));
     }
 
     [Fact]

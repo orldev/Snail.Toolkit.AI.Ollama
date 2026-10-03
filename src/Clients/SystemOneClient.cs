@@ -21,8 +21,8 @@ public sealed class SystemOneClient(HttpClient httpClient, IOptions<OllamaOption
     /// <inheritdoc />
     /// <exception cref="HttpBuilderException">
     /// Thrown on a non-success status: 400 for an invalid request, an unsupported model or a prompt that
-    /// overflows the context, 404 for a missing model, 413 for a body over 64 KiB, 500 when loading or
-    /// scoring fails.
+    /// overflows the context, 404 for a missing model, 413 for a body over 64 KiB (32 MiB with images),
+    /// 500 when loading or scoring fails.
     /// </exception>
     /// <exception cref="TimeoutException">Thrown when OllamaOptions.Timeout expires first.</exception>
     public async Task<SystemOneResponse> AnswerAsync(

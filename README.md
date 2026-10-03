@@ -196,7 +196,16 @@ if (response.Answers["label"] is ChoiceAnswer label)
 
 Each answer comes back as the kind it was asked as: `ChoiceAnswer` (the pick, every option's probability and a confidence), `NoulAnswer` (the probability of yes, so you choose the threshold) or `ScoreAnswer` (a probability-weighted index from 0 to N − 1 — not normalized to 0–1).
 
-Requires Ollama 0.35.0+ and a local GGUF model trained for System One. The call never streams, is bounded by `Timeout` and is retried on transient failures. Oversized input is never truncated: a request over 64 KiB or a prompt that overflows the context window fails with `HttpBuilderException`.
+Vision decision models — [Clef](https://ollama.com/library/clef) and [Clef Flash](https://ollama.com/library/clef-flash), Ollama 0.35.1+ — also judge images, shared by every question and scored jointly with the state. Send raw base64; URLs and data URIs are rejected:
+
+```csharp
+var request = new SystemOneRequest("clef-flash", "The user took this screenshot.", questions)
+{
+    Images = [Convert.ToBase64String(await File.ReadAllBytesAsync("screenshot.png"))]
+};
+```
+
+Requires Ollama 0.35.0+ and a local GGUF model trained for System One. The call never streams, is bounded by `Timeout` and is retried on transient failures. Oversized input is never truncated: a request over 64 KiB (32 MiB with images) or a prompt that overflows the context window fails with `HttpBuilderException`.
 
 ## Models
 
@@ -272,6 +281,7 @@ Unit tests run offline. Live integration tests are opt-in via environment variab
 OLLAMA_URL=http://localhost:11434 OLLAMA_MODEL=qwen3 dotnet test          # tools, reasoning, generate, logprobs, models
 OLLAMA_VISION_MODEL=qwen2.5vl dotnet test                                  # vision + structured output
 OLLAMA_URL=http://localhost:11434 OLLAMA_SYSTEMONE_MODEL=nimble dotnet test # System One, Ollama 0.35.0+
+OLLAMA_URL=http://localhost:11434 OLLAMA_SYSTEMONE_VISION_MODEL=clef-flash dotnet test # System One images, 0.35.1+
 OLLAMA_URL=http://localhost:11434 OLLAMA_EMBED_MODEL=qwen3-embedding:0.6b dotnet test # dimensions, truncate
 ```
 

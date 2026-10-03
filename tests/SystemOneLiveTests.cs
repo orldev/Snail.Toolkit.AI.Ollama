@@ -23,10 +23,61 @@ public sealed class SystemOneFactAttribute : FactAttribute
 }
 
 /// <summary>
+/// Marks a fact that only runs against a live Ollama 0.35.1+ holding a vision decision model: OLLAMA_URL
+/// points at the server and OLLAMA_SYSTEMONE_VISION_MODEL names the model, e.g. "clef-flash".
+/// </summary>
+public sealed class SystemOneVisionFactAttribute : FactAttribute
+{
+    public SystemOneVisionFactAttribute()
+    {
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OLLAMA_URL"))
+            || string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OLLAMA_SYSTEMONE_VISION_MODEL")))
+        {
+            Skip = "Set OLLAMA_URL and OLLAMA_SYSTEMONE_VISION_MODEL to run the System One vision test.";
+        }
+    }
+}
+
+/// <summary>
 /// Live verification that every question kind survives the round trip to a real System One model.
 /// </summary>
 public class SystemOneLiveTests
 {
+    private static SystemOneClient CreateClient()
+    {
+        string baseUrl = Environment.GetEnvironmentVariable("OLLAMA_URL")!;
+
+        return new SystemOneClient(
+            new HttpClient { BaseAddress = new Uri(baseUrl) },
+            Options.Create(new OllamaOptions { BaseUrl = baseUrl, Timeout = TimeSpan.FromMinutes(5) }));
+    }
+
+    /// <summary>
+    /// A flat blue square leaves one right answer, so the test checks that the image reached the model rather
+    /// than how well the model sees.
+    /// </summary>
+    [SystemOneVisionFact]
+    public async Task AnswerAsync_ImageAttached_ScoresTheImage()
+    {
+        var response = await CreateClient().AnswerAsync(new SystemOneRequest(
+            Environment.GetEnvironmentVariable("OLLAMA_SYSTEMONE_VISION_MODEL")!,
+            "The user attached a picture.",
+            new Dictionary<string, SystemOneQuestion>
+            {
+                ["color"] = new ChoiceQuestion("Which colour fills the attached image?", new Dictionary<string, string?>
+                {
+                    ["red"] = null,
+                    ["green"] = null,
+                    ["blue"] = null
+                })
+            })
+        {
+            Images = [Convert.ToBase64String(SolidPng.Of(64, 64, red: 0, green: 0, blue: 255))]
+        });
+
+        Assert.Equal("blue", Assert.IsType<ChoiceAnswer>(response.Answers["color"]).Choice);
+    }
+
     [SystemOneFact]
     public async Task AnswerAsync_EveryQuestionKind_ComesBackAsItsOwnAnswer()
     {
