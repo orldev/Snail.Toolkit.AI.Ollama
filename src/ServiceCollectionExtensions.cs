@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using Polly.Retry;
@@ -46,6 +47,9 @@ public static class ServiceCollectionExtensions
 
         private IServiceCollection AddClients()
         {
+            services.AddOptions<OllamaOptions>().ValidateOnStart();
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<OllamaOptions>, OllamaOptionsValidator>());
+
             services.AddHttpClient<IChatClient, ChatClient>(ConfigureTransport)
                 .ConfigurePrimaryHttpMessageHandler(CreateStreamingSafeHandler);
 
