@@ -43,10 +43,9 @@ public class ChatClient(HttpClient httpClient, IOptions<OllamaOptions> options)
         var request = messages.ToInternalRequest(options, ResolveModel(options));
         request.Stream = false;
 
-        var response = await _options
-                           .WithinTimeoutAsync(
-                               token => Post(ChatEndpoint).AsJson(request, Wire.ChatRequest).SendAsync(Wire.ChatResponse, token),
-                               cancellationToken)
+        var response = await Post(ChatEndpoint)
+                           .AsJson(request, Wire.ChatRequest)
+                           .SendWithinAsync(Wire.ChatResponse, _options, cancellationToken)
                            .ConfigureAwait(false)
                        ?? throw new InvalidOperationException("Failed to deserialize the chat response.");
 

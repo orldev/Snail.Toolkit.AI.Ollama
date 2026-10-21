@@ -38,8 +38,8 @@ public sealed class ModelsClient(HttpClient httpClient, IOptions<OllamaOptions> 
     /// <exception cref="TimeoutException">Thrown when OllamaOptions.Timeout expires first.</exception>
     public async Task<string> GetVersionAsync(CancellationToken cancellationToken = default)
     {
-        var reply = await _options
-            .WithinTimeoutAsync(token => Get(VersionEndpoint).SendAsync(Wire.Info<VersionReply>(), token), cancellationToken)
+        var reply = await Get(VersionEndpoint)
+            .SendWithinAsync(Wire.Info<VersionReply>(), _options, cancellationToken)
             .ConfigureAwait(false);
 
         return reply?.Version ?? throw new InvalidOperationException("Ollama answered /api/version without a version.");
@@ -49,8 +49,8 @@ public sealed class ModelsClient(HttpClient httpClient, IOptions<OllamaOptions> 
     /// <exception cref="TimeoutException">Thrown when OllamaOptions.Timeout expires first.</exception>
     public async Task<IReadOnlyList<LocalModel>> ListAsync(CancellationToken cancellationToken = default)
     {
-        var listing = await _options
-            .WithinTimeoutAsync(token => Get(TagsEndpoint).SendAsync(Wire.Info<LocalModels>(), token), cancellationToken)
+        var listing = await Get(TagsEndpoint)
+            .SendWithinAsync(Wire.Info<LocalModels>(), _options, cancellationToken)
             .ConfigureAwait(false);
 
         return listing?.Models ?? [];
@@ -60,8 +60,8 @@ public sealed class ModelsClient(HttpClient httpClient, IOptions<OllamaOptions> 
     /// <exception cref="TimeoutException">Thrown when OllamaOptions.Timeout expires first.</exception>
     public async Task<IReadOnlyList<RunningModel>> ListRunningAsync(CancellationToken cancellationToken = default)
     {
-        var listing = await _options
-            .WithinTimeoutAsync(token => Get(RunningEndpoint).SendAsync(Wire.Info<RunningModels>(), token), cancellationToken)
+        var listing = await Get(RunningEndpoint)
+            .SendWithinAsync(Wire.Info<RunningModels>(), _options, cancellationToken)
             .ConfigureAwait(false);
 
         return listing?.Models ?? [];
@@ -74,10 +74,9 @@ public sealed class ModelsClient(HttpClient httpClient, IOptions<OllamaOptions> 
     {
         try
         {
-            return await _options
-                .WithinTimeoutAsync(
-                    token => Post(ShowEndpoint).AsJson(new ShowRequest(model), Wire.Info<ShowRequest>()).SendAsync(Wire.ModelDescription, token),
-                    cancellationToken)
+            return await Post(ShowEndpoint)
+                .AsJson(new ShowRequest(model), Wire.Info<ShowRequest>())
+                .SendWithinAsync(Wire.ModelDescription, _options, cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (HttpBuilderException missing) when (missing.StatusCode == HttpStatusCode.NotFound)

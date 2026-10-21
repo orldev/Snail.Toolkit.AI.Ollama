@@ -1,37 +1,13 @@
 using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 using Microsoft.Extensions.AI;
 
 namespace Snail.Toolkit.AI.Ollama.Contracts.Mapping;
 
 /// <summary>
-/// Maps between MEAI abstractions and the Ollama wire contracts.
+/// Maps a MEAI conversation and its options to Ollama's /api/chat request.
 /// </summary>
-internal static class ChatMappingExtensions
+internal static class ChatRequestMappingExtensions
 {
-    /// <summary>
-    /// The options tool-call arguments and results are written and read with: names matched in any case,
-    /// metadata from <see cref="MappingJson"/> first and from MEAI's resolver for anything else.
-    /// </summary>
-    /// <remarks>
-    /// MEAI's resolver adds reflection only where the application allows it, so a tool result of any
-    /// type serializes under the JIT as before; under Native AOT it has to be a type MEAI knows.
-    /// </remarks>
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        TypeInfoResolver = JsonTypeInfoResolver.Combine(MappingJson.Default, AIJsonUtilities.DefaultOptions.TypeInfoResolver)
-    };
-
-    private static readonly JsonTypeInfo<IDictionary<string, object?>?> WrittenArguments =
-        (JsonTypeInfo<IDictionary<string, object?>?>)JsonOptions.GetTypeInfo(typeof(IDictionary<string, object?>));
-
-    private static readonly JsonTypeInfo<object> WrittenResult =
-        (JsonTypeInfo<object>)JsonOptions.GetTypeInfo(typeof(object));
-
-    private static readonly JsonTypeInfo<Dictionary<string, object?>> ReadArguments =
-        (JsonTypeInfo<Dictionary<string, object?>>)JsonOptions.GetTypeInfo(typeof(Dictionary<string, object?>));
-
     /// <summary>
     /// Builds the wire request. An attachment Ollama cannot read raises <see cref="NotSupportedException"/>.
     /// </summary>
@@ -54,13 +30,9 @@ internal static class ChatMappingExtensions
                 ? null
                 : options?.Tools?.OfType<AIFunctionDeclaration>().Select(f => f.ToInternalTool()),
             Think = options.ToThink(),
-            KeepAlive = options?.AdditionalProperties?.TryGetValue("keep_alive", out string? keepAlive) is true
-                ? keepAlive
-                : null,
+            KeepAlive = options.ToKeepAlive(),
             TopLogProbs = options.ToTopLogProbs(),
-            LogProbs = options?.AdditionalProperties?.TryGetValue("logprobs", out bool logProbs) is true
-                ? logProbs
-                : options.ToTopLogProbs() is not null ? true : null,
+            LogProbs = options.ToLogProbs(),
             Format = options?.ResponseFormat switch
             {
                 ChatResponseFormatJson { Schema: { } schema } => schema,
@@ -134,12 +106,23 @@ internal static class ChatMappingExtensions
         options?.AdditionalProperties?.TryGetValue("top_logprobs", out int top) is true ? top : null;
 
     /// <summary>
-    /// Log probabilities ride in AdditionalProperties["logprobs"]: MEAI has no typed slot for them.
+    /// An explicit AdditionalProperties["logprobs"] wins; asking for alternatives turns them on.
     /// </summary>
-    private static AdditionalPropertiesDictionary? ToAdditionalProperties(this Responses.ResponseBase response) =>
-        response.LogProbs is { Count: > 0 } logProbs
-            ? new AdditionalPropertiesDictionary { ["logprobs"] = logProbs }
-            : null;
+    private static bool? ToLogProbs(this ChatOptions? options)
+    {
+        if (options?.AdditionalProperties?.TryGetValue("logprobs", out bool logProbs) is true)
+        {
+            return logProbs;
+        }
+
+        return options.ToTopLogProbs() is not null ? true : null;
+    }
+
+    /// <summary>
+    /// How long Ollama keeps the model loaded after the call; unset leaves the server's OLLAMA_KEEP_ALIVE.
+    /// </summary>
+    private static string? ToKeepAlive(this ChatOptions? options) =>
+        options?.AdditionalProperties?.TryGetValue("keep_alive", out string? keepAlive) is true ? keepAlive : null;
 
     /// <summary>
     /// A tool result carries only the call id; the function name Ollama wants in tool_name
@@ -166,7 +149,7 @@ internal static class ChatMappingExtensions
                 Type: "function",
                 Function: new Schema.FunctionCall(
                     Name: call.Name,
-                    Arguments: JsonSerializer.SerializeToElement(call.Arguments, WrittenArguments))))
+                    Arguments: JsonSerializer.SerializeToElement(call.Arguments, ToolJson.WrittenArguments))))
         ];
 
         List<string> images =
@@ -207,7 +190,7 @@ internal static class ChatMappingExtensions
         null => string.Empty,
         string text => text,
         JsonElement element => element.ToString(),
-        _ => JsonSerializer.Serialize(result, WrittenResult)
+        _ => JsonSerializer.Serialize(result, ToolJson.WrittenResult)
     };
 
     private static Schema.ModelOptions ToInternalOptions(this ChatOptions options) => new()
@@ -233,117 +216,4 @@ internal static class ChatMappingExtensions
             Name: function.Name,
             Parameters: function.JsonSchema,
             Description: function.Description is { Length: > 0 } description ? description : null));
-
-    /// <summary>
-    /// Maps a completed response; a generated call id substitutes for the one
-    /// Ollama's native API never sends.
-    /// </summary>
-    public static ChatResponse ToAiResponse(this Responses.ChatResponse response)
-    {
-        var aiMessage = new ChatMessage(new ChatRole(response.Message.Role), []);
-
-        if (!string.IsNullOrEmpty(response.Message.Thinking))
-        {
-            aiMessage.Contents.Add(new TextReasoningContent(response.Message.Thinking));
-        }
-
-        if (!string.IsNullOrEmpty(response.Message.Content))
-        {
-            aiMessage.Contents.Add(new TextContent(response.Message.Content));
-        }
-
-        MapToolCallsToContents(response.Message.ToolCalls, aiMessage.Contents);
-
-        return new ChatResponse(aiMessage)
-        {
-            ModelId = response.Model,
-            ResponseId = Guid.NewGuid().ToString(),
-            CreatedAt = response.CreatedAt,
-            FinishReason = response.ToFinishReason(),
-            Usage = response.ToUsageDetails(),
-            AdditionalProperties = response.ToAdditionalProperties()
-        };
-    }
-
-    /// <summary>
-    /// Maps a streaming chunk; usage and finish reason appear only on the final one.
-    /// </summary>
-    public static ChatResponseUpdate ToAiUpdate(this Responses.ChatResponse response)
-    {
-        var update = new ChatResponseUpdate
-        {
-            Role = new ChatRole(response.Message.Role),
-            ModelId = response.Model,
-            CreatedAt = response.CreatedAt,
-            RawRepresentation = response,
-            AdditionalProperties = response.ToAdditionalProperties()
-        };
-
-        if (!string.IsNullOrEmpty(response.Message.Thinking))
-        {
-            update.Contents.Add(new TextReasoningContent(response.Message.Thinking));
-        }
-
-        if (!string.IsNullOrEmpty(response.Message.Content))
-        {
-            update.Contents.Add(new TextContent(response.Message.Content));
-        }
-
-        MapToolCallsToContents(response.Message.ToolCalls, update.Contents);
-
-        if (response.IsDone)
-        {
-            update.FinishReason = response.ToFinishReason();
-
-            if (response.ToUsageDetails() is { } usage)
-            {
-                update.Contents.Add(new UsageContent(usage));
-            }
-        }
-
-        return update;
-    }
-
-    /// <summary>
-    /// ToolCalls wins over done_reason — Ollama reports "stop" even when the message
-    /// requests tool execution.
-    /// </summary>
-    private static ChatFinishReason? ToFinishReason(this Responses.ChatResponse response) => response switch
-    {
-        { IsDone: false } => null,
-        { Message.ToolCalls: { } calls } when calls.Any() => ChatFinishReason.ToolCalls,
-        { DoneReason: "stop" } => ChatFinishReason.Stop,
-        { DoneReason: "length" } => ChatFinishReason.Length,
-        { DoneReason: { Length: > 0 } reason } => new ChatFinishReason(reason),
-        _ => null
-    };
-
-    /// <summary>
-    /// Token counters of a final chunk as MEAI usage; null when Ollama sent none.
-    /// </summary>
-    public static UsageDetails? ToUsageDetails(this Responses.ResponseBase response) =>
-        response is { PromptEvalCount: null, EvalCount: null }
-            ? null
-            : new UsageDetails
-            {
-                InputTokenCount = response.PromptEvalCount,
-                CachedInputTokenCount = response.PromptEvalCachedCount,
-                OutputTokenCount = response.EvalCount,
-                TotalTokenCount = (response.PromptEvalCount ?? 0) + (response.EvalCount ?? 0)
-            };
-
-    private static void MapToolCallsToContents(IEnumerable<Schema.ToolCall>? internalToolCalls, IList<AIContent> targetContents)
-    {
-        foreach (var toolCall in internalToolCalls ?? [])
-        {
-            var arguments = toolCall.Function.Arguments.ValueKind is not JsonValueKind.Undefined
-                ? toolCall.Function.Arguments.Deserialize(ReadArguments)
-                : null;
-
-            targetContents.Add(new FunctionCallContent(
-                callId: toolCall.Id ?? Guid.NewGuid().ToString("N"),
-                name: toolCall.Function.Name,
-                arguments: arguments));
-        }
-    }
 }

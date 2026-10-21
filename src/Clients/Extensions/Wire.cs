@@ -1,6 +1,5 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using Snail.Toolkit.AI.Ollama.Contracts.Requests;
 using Snail.Toolkit.AI.Ollama.Contracts.Responses;
@@ -43,11 +42,13 @@ internal static class Wire
     /// the characters HTML gives meaning to — is harmless here; quotes, backslashes and control characters are
     /// still escaped.
     /// </para>
+    /// <para>
+    /// The settings are <see cref="OllamaJson"/>'s own, copied, so they are written once: two copies had already
+    /// drifted apart. The encoder is the one setting the generator's attribute cannot hold.
+    /// </para>
     /// </remarks>
-    public static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
+    public static readonly JsonSerializerOptions Json = new(OllamaJson.Default.Options)
     {
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        AllowOutOfOrderMetadataProperties = true,
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         TypeInfoResolver = JsonTypeInfoResolver.Combine(OllamaJson.Default, AIJsonUtilities.DefaultOptions.TypeInfoResolver)
     };

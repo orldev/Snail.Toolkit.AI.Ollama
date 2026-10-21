@@ -6,7 +6,7 @@ using Snail.Toolkit.AI.Ollama.Contracts.Responses;
 namespace Snail.Toolkit.AI.Ollama.Clients.Extensions;
 
 /// <summary>
-/// Source-generated metadata for every request and answer on the wire, with the settings of <see cref="Wire.Json"/>.
+/// Source-generated metadata for every request and answer on the wire, and the settings <see cref="Wire.Json"/> copies.
 /// </summary>
 [JsonSourceGenerationOptions(
     JsonSerializerDefaults.Web,

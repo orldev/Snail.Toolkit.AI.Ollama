@@ -1,4 +1,6 @@
+using System.Text.Json.Serialization.Metadata;
 using Snail.Toolkit.AI.Ollama.Configuration;
+using Snail.Toolkit.HttpBuilder.Extensions;
 
 namespace Snail.Toolkit.AI.Ollama.Clients.Extensions;
 
@@ -8,6 +10,17 @@ namespace Snail.Toolkit.AI.Ollama.Clients.Extensions;
 internal static class UnaryTimeout
 {
     /// <summary>
+    /// Sends the request and reads its JSON answer within the configured timeout.
+    /// </summary>
+    /// <exception cref="TimeoutException">The configured timeout expired before Ollama answered.</exception>
+    public static Task<TAnswer?> SendWithinAsync<TAnswer>(
+        this IHttpRequestBuilder request,
+        JsonTypeInfo<TAnswer> answer,
+        OllamaOptions options,
+        CancellationToken cancellationToken) =>
+        options.WithinTimeoutAsync(token => request.SendAsync(answer, token), cancellationToken);
+
+    /// <summary>
     /// Runs the call under a token that fires at the configured timeout or with the caller's token.
     /// </summary>
     /// <exception cref="TimeoutException">The configured timeout expired before Ollama answered.</exception>
@@ -16,7 +29,7 @@ internal static class UnaryTimeout
     /// linked token. Its expiry would otherwise surface as the same cancellation a caller sees after
     /// cancelling on purpose, and a retry policy cannot tell a slow model from an abandoned request.
     /// </remarks>
-    public static async Task<TResult> WithinTimeoutAsync<TResult>(
+    private static async Task<TResult> WithinTimeoutAsync<TResult>(
         this OllamaOptions options,
         Func<CancellationToken, Task<TResult>> call,
         CancellationToken cancellationToken)
