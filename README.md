@@ -66,6 +66,10 @@ var answer = await agent.GetResponseAsync(
     new ChatOptions { Tools = [getWeather] });
 ```
 
+A tool your application calls itself is offered the same way, as a declaration: `getWeather.AsDeclarationOnly()` or `AIFunctionFactory.CreateDeclaration(...)`. The model's call then comes back to you as a `FunctionCallContent` with `FinishReason` `ToolCalls`.
+
+What Ollama has no field for: `ChatToolMode.None` sends no tools at all, but `RequireAny` and `RequireSpecific` cannot force a call — Ollama has no `tool_choice`, so the model decides as with `Auto`. Hosted tools (`HostedWebSearchTool`, `HostedCodeInterpreterTool` and the like) run on a provider's servers, which Ollama does not have, and are not sent.
+
 ### Structured output
 
 ```csharp
