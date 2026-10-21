@@ -8,8 +8,8 @@ namespace Snail.Toolkit.AI.Ollama.Contracts.Responses;
 internal record GenerateResponse : ResponseBase
 {
     [JsonPropertyName("response")]
-    public string Response { get; init; } = string.Empty;
+    public string Response { get; set; } = string.Empty;
 
     [JsonPropertyName("thinking")]
-    public string? Thinking { get; init; }
+    public string? Thinking { get; set; }
 }

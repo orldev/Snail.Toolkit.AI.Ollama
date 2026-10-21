@@ -464,4 +464,71 @@ public class ChatMappingTests
 
         Assert.Null(response.ToAiResponse().AdditionalProperties);
     }
+
+    /// <summary>
+    /// Tool results and arguments are written and read as the reflection-based options wrote and read
+    /// them: case-insensitive names, default naming and escaping, whatever the result's type.
+    /// </summary>
+    [Fact]
+    public void ToInternalRequest_ResultsAndArgumentsOfManyTypes_WrittenAsBefore()
+    {
+        var before = OptionsBefore;
+        var arguments = new Dictionary<string, object?>
+        {
+            ["city"] = "Zürich <\"quoted\">",
+            ["days"] = 3,
+            ["ratio"] = 0.75m,
+            ["when"] = new DateTimeOffset(2026, 10, 12, 10, 0, 0, TimeSpan.FromHours(2)),
+            ["tags"] = new[] { "a", "b" },
+            ["nested"] = new Dictionary<string, object?> { ["empty"] = null, ["flag"] = true },
+            ["poco"] = new Forecast("clear", 21.5),
+            ["element"] = JsonDocument.Parse("""{"raw":[1,2]}""").RootElement
+        };
+        object[] results =
+        [
+            new Forecast("rain", 12.25),
+            new { Temperature = 21.5, Sky = "clear" },
+            new Dictionary<string, object?> { ["temperature"] = 21.5, ["sky"] = null },
+            new List<int> { 1, 2, 3 },
+            42,
+            new TextContent("from a tool"),
+            new DateTime(2026, 10, 12, 10, 0, 0, DateTimeKind.Utc)
+        ];
+        List<ChatMessage> history =
+        [
+            new(ChatRole.Assistant, [new FunctionCallContent("call-1", "get_weather", arguments)]),
+            new(ChatRole.Tool, [.. results.Select((result, index) => new FunctionResultContent($"call-{index}", result))])
+        ];
+
+        var request = history.ToInternalRequest(null, "qwen3");
+        var messages = request.Messages!.ToList();
+
+        Assert.Equal(
+            JsonSerializer.SerializeToElement<IDictionary<string, object?>>(arguments, before).GetRawText(),
+            messages[0].ToolCalls!.Single().Function.Arguments.GetRawText());
+        Assert.Equal(
+            results.Select(result => JsonSerializer.Serialize(result, before)),
+            messages.Skip(1).Select(message => message.Content));
+    }
+
+    [Fact]
+    public void ToAiResponse_ToolCallArguments_ReadAsBefore()
+    {
+        const string arguments = """{"location":"Paris","days":3,"nested":{"a":[1,null]},"none":null}""";
+        var response = Deserialize($$$"""
+            {"model":"m","message":{"role":"assistant","content":"","tool_calls":[
+              {"function":{"name":"get_weather","arguments":{{{arguments}}}}}]},"done":true}
+            """);
+
+        var call = Assert.Single(response.ToAiResponse().Messages.Single().Contents.OfType<FunctionCallContent>());
+        var expected = JsonSerializer.Deserialize<Dictionary<string, object?>>(arguments, OptionsBefore)!;
+
+        Assert.Equal(
+            expected.Select(pair => $"{pair.Key}={pair.Value?.GetType().Name}:{pair.Value}"),
+            call.Arguments!.Select(pair => $"{pair.Key}={pair.Value?.GetType().Name}:{pair.Value}"));
+    }
+
+    private static readonly JsonSerializerOptions OptionsBefore = new() { PropertyNameCaseInsensitive = true };
+
+    private sealed record Forecast(string Sky, double Temperature);
 }

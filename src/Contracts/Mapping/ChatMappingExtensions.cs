@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using Microsoft.Extensions.AI;
 
 namespace Snail.Toolkit.AI.Ollama.Contracts.Mapping;
@@ -8,7 +9,28 @@ namespace Snail.Toolkit.AI.Ollama.Contracts.Mapping;
 /// </summary>
 internal static class ChatMappingExtensions
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
+    /// <summary>
+    /// The options tool-call arguments and results are written and read with: names matched in any case,
+    /// metadata from <see cref="MappingJson"/> first and from MEAI's resolver for anything else.
+    /// </summary>
+    /// <remarks>
+    /// MEAI's resolver adds reflection only where the application allows it, so a tool result of any
+    /// type serializes under the JIT as before; under Native AOT it has to be a type MEAI knows.
+    /// </remarks>
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        TypeInfoResolver = JsonTypeInfoResolver.Combine(MappingJson.Default, AIJsonUtilities.DefaultOptions.TypeInfoResolver)
+    };
+
+    private static readonly JsonTypeInfo<IDictionary<string, object?>?> WrittenArguments =
+        (JsonTypeInfo<IDictionary<string, object?>?>)JsonOptions.GetTypeInfo(typeof(IDictionary<string, object?>));
+
+    private static readonly JsonTypeInfo<object> WrittenResult =
+        (JsonTypeInfo<object>)JsonOptions.GetTypeInfo(typeof(object));
+
+    private static readonly JsonTypeInfo<Dictionary<string, object?>> ReadArguments =
+        (JsonTypeInfo<Dictionary<string, object?>>)JsonOptions.GetTypeInfo(typeof(Dictionary<string, object?>));
 
     /// <summary>
     /// Builds the wire request. Remote image URIs raise <see cref="NotSupportedException"/> —
@@ -122,7 +144,7 @@ internal static class ChatMappingExtensions
                 Type: "function",
                 Function: new Schema.FunctionCall(
                     Name: call.Name,
-                    Arguments: JsonSerializer.SerializeToElement(call.Arguments, JsonOptions))))
+                    Arguments: JsonSerializer.SerializeToElement(call.Arguments, WrittenArguments))))
         ];
 
         List<string> images =
@@ -163,7 +185,7 @@ internal static class ChatMappingExtensions
         null => string.Empty,
         string text => text,
         JsonElement element => element.ToString(),
-        _ => JsonSerializer.Serialize(result, JsonOptions)
+        _ => JsonSerializer.Serialize(result, WrittenResult)
     };
 
     private static Schema.ModelOptions ToInternalOptions(this ChatOptions options) => new()
@@ -290,7 +312,7 @@ internal static class ChatMappingExtensions
         foreach (var toolCall in internalToolCalls ?? [])
         {
             var arguments = toolCall.Function.Arguments.ValueKind is not JsonValueKind.Undefined
-                ? toolCall.Function.Arguments.Deserialize<Dictionary<string, object?>>(JsonOptions)
+                ? toolCall.Function.Arguments.Deserialize(ReadArguments)
                 : null;
 
             targetContents.Add(new FunctionCallContent(

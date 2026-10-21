@@ -26,20 +26,20 @@ public sealed class ModelsClient(HttpClient httpClient, IOptions<OllamaOptions> 
 
     private readonly OllamaOptions _options = options.Value;
 
-    private sealed record VersionReply([property: JsonPropertyName("version")] string Version);
+    internal sealed record VersionReply([property: JsonPropertyName("version")] string Version);
 
-    private sealed record LocalModels([property: JsonPropertyName("models")] IReadOnlyList<LocalModel>? Models);
+    internal sealed record LocalModels([property: JsonPropertyName("models")] IReadOnlyList<LocalModel>? Models);
 
-    private sealed record RunningModels([property: JsonPropertyName("models")] IReadOnlyList<RunningModel>? Models);
+    internal sealed record RunningModels([property: JsonPropertyName("models")] IReadOnlyList<RunningModel>? Models);
 
-    private sealed record ShowRequest([property: JsonPropertyName("model")] string Model);
+    internal sealed record ShowRequest([property: JsonPropertyName("model")] string Model);
 
     /// <inheritdoc />
     /// <exception cref="TimeoutException">Thrown when OllamaOptions.Timeout expires first.</exception>
     public async Task<string> GetVersionAsync(CancellationToken cancellationToken = default)
     {
         var reply = await _options
-            .WithinTimeoutAsync(token => Get(VersionEndpoint).WithJsonOptions(Wire.Json).SendAsync<VersionReply>(token), cancellationToken)
+            .WithinTimeoutAsync(token => Get(VersionEndpoint).SendAsync(Wire.Info<VersionReply>(), token), cancellationToken)
             .ConfigureAwait(false);
 
         return reply?.Version ?? throw new InvalidOperationException("Ollama answered /api/version without a version.");
@@ -50,7 +50,7 @@ public sealed class ModelsClient(HttpClient httpClient, IOptions<OllamaOptions> 
     public async Task<IReadOnlyList<LocalModel>> ListAsync(CancellationToken cancellationToken = default)
     {
         var listing = await _options
-            .WithinTimeoutAsync(token => Get(TagsEndpoint).WithJsonOptions(Wire.Json).SendAsync<LocalModels>(token), cancellationToken)
+            .WithinTimeoutAsync(token => Get(TagsEndpoint).SendAsync(Wire.Info<LocalModels>(), token), cancellationToken)
             .ConfigureAwait(false);
 
         return listing?.Models ?? [];
@@ -61,7 +61,7 @@ public sealed class ModelsClient(HttpClient httpClient, IOptions<OllamaOptions> 
     public async Task<IReadOnlyList<RunningModel>> ListRunningAsync(CancellationToken cancellationToken = default)
     {
         var listing = await _options
-            .WithinTimeoutAsync(token => Get(RunningEndpoint).WithJsonOptions(Wire.Json).SendAsync<RunningModels>(token), cancellationToken)
+            .WithinTimeoutAsync(token => Get(RunningEndpoint).SendAsync(Wire.Info<RunningModels>(), token), cancellationToken)
             .ConfigureAwait(false);
 
         return listing?.Models ?? [];
@@ -76,7 +76,7 @@ public sealed class ModelsClient(HttpClient httpClient, IOptions<OllamaOptions> 
         {
             return await _options
                 .WithinTimeoutAsync(
-                    token => Post(ShowEndpoint).AsJson(new ShowRequest(model), Wire.Json).SendAsync<ModelDescription>(token),
+                    token => Post(ShowEndpoint).AsJson(new ShowRequest(model), Wire.Info<ShowRequest>()).SendAsync(Wire.ModelDescription, token),
                     cancellationToken)
                 .ConfigureAwait(false);
         }

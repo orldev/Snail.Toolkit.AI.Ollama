@@ -7,7 +7,6 @@ using Snail.Toolkit.AI.Ollama.Contracts.Mapping;
 using Snail.Toolkit.HttpBuilder.Extensions;
 
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
-using ChatResponse = Snail.Toolkit.AI.Ollama.Contracts.Responses.ChatResponse;
 using IChatClient = Snail.Toolkit.AI.Ollama.Abstractions.IChatClient;
 
 namespace Snail.Toolkit.AI.Ollama.Clients;
@@ -45,7 +44,7 @@ public class ChatClient(HttpClient httpClient, IOptions<OllamaOptions> options)
 
         var response = await _options
                            .WithinTimeoutAsync(
-                               token => Post(ChatEndpoint).AsJson(request, Wire.Json).SendAsync<ChatResponse>(token),
+                               token => Post(ChatEndpoint).AsJson(request, Wire.ChatRequest).SendAsync(Wire.ChatResponse, token),
                                cancellationToken)
                            .ConfigureAwait(false)
                        ?? throw new InvalidOperationException("Failed to deserialize the chat response.");
@@ -63,8 +62,8 @@ public class ChatClient(HttpClient httpClient, IOptions<OllamaOptions> options)
         var request = messages.ToInternalRequest(options, ResolveModel(options));
 
         var chunks = Post(ChatEndpoint)
-            .AsJson(request, Wire.Json)
-            .SendAsNdjsonAsync<ChatResponse>(cancellationToken)
+            .AsJson(request, Wire.ChatRequest)
+            .SendAsNdjsonAsync(Wire.ChatResponse, cancellationToken)
             .UntilDoneAsync(cancellationToken);
 
         await foreach (var chunk in chunks.ConfigureAwait(false))

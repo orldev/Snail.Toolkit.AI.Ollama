@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="benchmarks/Snail.Toolkit.AI.Ollama.Benchmarks.csproj" />
   <Project Path="src/Snail.Toolkit.AI.Ollama.csproj" />
+  <Project Path="tests/Snail.Toolkit.AI.Ollama.NativeProbe/Snail.Toolkit.AI.Ollama.NativeProbe.csproj" />
   <Project Path="tests/Snail.Toolkit.AI.Ollama.Tests.csproj" />
 </Solution>

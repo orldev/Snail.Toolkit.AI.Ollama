@@ -273,6 +273,12 @@ A unary call that outlives `Timeout` throws `TimeoutException`; cancelling your 
 
 Streams never end quietly on a failure. Once the 200 headers are out, Ollama can only report an error as a line of the stream: that surfaces as `InvalidOperationException` carrying Ollama's own message. A stream that closes before its final chunk — a crashed runner, a proxy cutting the connection — throws `IOException` instead of handing you a truncated answer.
 
+## Native AOT
+
+The library is trimming- and Native AOT-compatible: requests and answers are read and written from source-generated metadata, and settings are bound by the configuration binding generator. The CI publishes `tests/Snail.Toolkit.AI.Ollama.NativeProbe` with Native AOT and runs it.
+
+Values you pass typed as `object` — `SystemOneRequest.State`, a question's `Instructions`, `Format` and `Think`, `EmbeddingsRequest.Options`, tool-call arguments and results — are serialized through MEAI's JSON resolver. Under the JIT any type works. Under Native AOT pass a string, a number, a boolean, a `JsonElement`, or a `Dictionary<string, object?>` of those; an anonymous type or a class of your own throws `NotSupportedException` there.
+
 ## Testing
 
 Unit tests run offline. Live integration tests are opt-in via environment variables:

@@ -31,7 +31,7 @@ public class EmbeddingsClient(HttpClient httpClient, IOptions<OllamaOptions> opt
         CancellationToken cancellationToken = default) =>
         await _options
             .WithinTimeoutAsync(
-                token => Post(EmbedEndpoint).AsJson(request, Wire.Json).SendAsync<EmbeddingsResponse>(token),
+                token => Post(EmbedEndpoint).AsJson(request, Wire.EmbeddingsRequest).SendAsync(Wire.EmbeddingsResponse, token),
                 cancellationToken)
             .ConfigureAwait(false)
         ?? throw new InvalidOperationException("Failed to deserialize the embeddings response.");

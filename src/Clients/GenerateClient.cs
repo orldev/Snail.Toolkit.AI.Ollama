@@ -3,7 +3,6 @@ using Snail.Toolkit.AI.Ollama.Abstractions;
 using Snail.Toolkit.AI.Ollama.Clients.Extensions;
 using Snail.Toolkit.AI.Ollama.Contracts.Mapping;
 using Snail.Toolkit.AI.Ollama.Contracts.Requests;
-using Snail.Toolkit.AI.Ollama.Contracts.Responses;
 using Snail.Toolkit.AI.Ollama.Contracts.Schema;
 using Snail.Toolkit.HttpBuilder.Extensions;
 
@@ -25,8 +24,8 @@ public class GenerateClient(HttpClient httpClient)
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var chunks = Post(GenerateEndpoint)
-            .AsJson(request, Wire.Json)
-            .SendAsNdjsonAsync<GenerateResponse>(cancellationToken)
+            .AsJson(request, Wire.GenerateRequest)
+            .SendAsNdjsonAsync(Wire.GenerateResponse, cancellationToken)
             .UntilDoneAsync(cancellationToken);
 
         await foreach (var chunk in chunks.ConfigureAwait(false))

@@ -30,7 +30,7 @@ public sealed class SystemOneClient(HttpClient httpClient, IOptions<OllamaOption
         CancellationToken cancellationToken = default) =>
         await _options
             .WithinTimeoutAsync(
-                token => Post(SystemOneEndpoint).AsJson(request, Wire.Json).SendAsync<SystemOneResponse>(token),
+                token => Post(SystemOneEndpoint).AsJson(request, Wire.SystemOneRequest).SendAsync(Wire.SystemOneResponse, token),
                 cancellationToken)
             .ConfigureAwait(false)
         ?? throw new InvalidOperationException("Failed to deserialize the System One response.");

@@ -12,8 +12,12 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
 
+    <!--
+      Settings are bound by the configuration binding source generator, not by reflection: OllamaOptions has
+      only set properties, which the generator binds.
+    -->
     <PropertyGroup>
-        <SnailNotNativeBecause>Requests and answers go through Snail.Toolkit.HttpBuilder.Extensions 0.3.0, which reads and writes JSON by reflection: under Native AOT the first chat throws. Native once HttpBuilder takes JsonTypeInfo overloads and this library a source-generated JSON context (the audit, B.md: O3, O4).</SnailNotNativeBecause>
+        <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
     </PropertyGroup>
 
     <ItemGroup>

@@ -13,5 +13,5 @@ internal record ChatResponse : ResponseBase
     /// would hide Ollama's own explanation behind a missing-property error.
     /// </remarks>
     [JsonPropertyName("message")]
-    public Message Message { get; init; } = new("assistant", string.Empty, null, null, null);
+    public Message Message { get; set; } = new("assistant", string.Empty, null, null, null);
 }
