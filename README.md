@@ -81,7 +81,7 @@ var options = new ChatOptions { ResponseFormat = ChatResponseFormat.ForJsonSchem
 
 ### Images and thinking
 
-Attach images as `DataContent` (Ollama accepts only inline base64 — a remote `UriContent` throws):
+Attach images as `DataContent`. Ollama reads text and inline base64 images only, so anything else throws `NotSupportedException` instead of being dropped: a remote `UriContent`, or a `DataContent` that is not an image (a PDF, audio — extract its text first):
 
 ```csharp
 var message = new ChatMessage(ChatRole.User,

@@ -35,6 +35,7 @@ public class ChatClient(HttpClient httpClient, IOptions<OllamaOptions> options)
 
     /// <inheritdoc />
     /// <exception cref="TimeoutException">Thrown when OllamaOptions.Timeout expires first.</exception>
+    /// <exception cref="NotSupportedException">Thrown for an attachment that is remote, or inline but not an image.</exception>
     public async Task<Microsoft.Extensions.AI.ChatResponse> GetResponseAsync(
         IEnumerable<ChatMessage> messages, ChatOptions? options = null,
         CancellationToken cancellationToken = default)
@@ -55,6 +56,7 @@ public class ChatClient(HttpClient httpClient, IOptions<OllamaOptions> options)
     /// <inheritdoc />
     /// <exception cref="InvalidOperationException">Thrown when Ollama reports a failure inside the stream.</exception>
     /// <exception cref="IOException">Thrown when the stream ends before its final chunk.</exception>
+    /// <exception cref="NotSupportedException">Thrown for an attachment that is remote, or inline but not an image.</exception>
     public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
         IEnumerable<ChatMessage> messages, ChatOptions? options = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

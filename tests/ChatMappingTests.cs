@@ -285,6 +285,36 @@ public class ChatMappingTests
         Assert.Throws<NotSupportedException>(() => history.ToInternalRequest(null, "m"));
     }
 
+    /// <summary>
+    /// Ollama reads text and inline images only. A PDF or audio attachment was dropped without a word, and the model
+    /// answered as if it had never been sent.
+    /// </summary>
+    [Theory]
+    [InlineData("application/pdf")]
+    [InlineData("audio/wav")]
+    public void ToInternalRequest_AttachmentOllamaCannotRead_ThrowsNotSupportedException(string mediaType)
+    {
+        List<ChatMessage> history =
+        [
+            new(ChatRole.User, [new TextContent("Summarize the attachment."), new DataContent(new byte[] { 0x25, 0x50 }, mediaType)])
+        ];
+
+        var refusal = Assert.Throws<NotSupportedException>(() => history.ToInternalRequest(null, "m"));
+
+        Assert.Contains(mediaType, refusal.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ToInternalRequest_RemoteDocumentUri_ThrowsNotSupportedException()
+    {
+        List<ChatMessage> history =
+        [
+            new(ChatRole.User, [new UriContent(new Uri("https://example.com/report.pdf"), "application/pdf")])
+        ];
+
+        Assert.Throws<NotSupportedException>(() => history.ToInternalRequest(null, "m"));
+    }
+
     [Fact]
     public void ToInternalRequest_ParallelToolResults_ExpandsIntoSeparateToolMessages()
     {

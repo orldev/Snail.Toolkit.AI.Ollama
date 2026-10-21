@@ -33,8 +33,7 @@ internal static class ChatMappingExtensions
         (JsonTypeInfo<Dictionary<string, object?>>)JsonOptions.GetTypeInfo(typeof(Dictionary<string, object?>));
 
     /// <summary>
-    /// Builds the wire request. Remote image URIs raise <see cref="NotSupportedException"/> —
-    /// Ollama accepts only inline base64 images.
+    /// Builds the wire request. An attachment Ollama cannot read raises <see cref="NotSupportedException"/>.
     /// </summary>
     public static Requests.ChatRequest ToInternalRequest(
         this IEnumerable<ChatMessage> messages,
@@ -43,11 +42,7 @@ internal static class ChatMappingExtensions
     {
         var history = messages as IReadOnlyCollection<ChatMessage> ?? [.. messages];
 
-        if (history.SelectMany(m => m.Contents).OfType<UriContent>().Any(u => u.HasTopLevelMediaType("image")))
-        {
-            throw new NotSupportedException(
-                "Ollama accepts only inline images: download the image and pass it as DataContent.");
-        }
+        RefuseUnreadableAttachments(history);
 
         var toolNamesByCallId = MapToolNamesByCallId(history);
         var conversation = history.SelectMany(m => m.ToInternalMessages(toolNamesByCallId));
@@ -75,6 +70,33 @@ internal static class ChatMappingExtensions
         };
 
         return request;
+    }
+
+    /// <summary>
+    /// Ollama reads text and inline base64 images only; any other attachment would never reach the model.
+    /// </summary>
+    /// <remarks>
+    /// A PDF or audio DataContent, and any remote URI, used to be dropped without a word, and the model answered
+    /// as if nothing had been attached.
+    /// </remarks>
+    /// <exception cref="NotSupportedException">An attachment is remote, or inline but not an image.</exception>
+    private static void RefuseUnreadableAttachments(IReadOnlyCollection<ChatMessage> history)
+    {
+        foreach (var content in history.SelectMany(message => message.Contents))
+        {
+            if (content is UriContent remote)
+            {
+                throw new NotSupportedException(remote.HasTopLevelMediaType("image")
+                    ? "Ollama accepts only inline images: download the image and pass it as DataContent."
+                    : $"Ollama cannot read a remote {remote.MediaType} attachment: only text and inline images reach the model.");
+            }
+
+            if (content is DataContent data && !data.HasTopLevelMediaType("image"))
+            {
+                throw new NotSupportedException(
+                    $"Ollama cannot read a {data.MediaType} attachment: only text and inline images reach the model; extract its text first.");
+            }
+        }
     }
 
     /// <summary>
