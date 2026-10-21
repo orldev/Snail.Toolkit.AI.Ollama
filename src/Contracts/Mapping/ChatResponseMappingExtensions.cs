@@ -93,11 +93,11 @@ internal static class ChatResponseMappingExtensions
             };
 
     /// <summary>
-    /// Log probabilities ride in AdditionalProperties["logprobs"]: MEAI has no typed slot for them.
+    /// Log probabilities ride in AdditionalProperties under <see cref="OllamaProperties.LogProbs"/>: MEAI has no typed slot for them.
     /// </summary>
     private static AdditionalPropertiesDictionary? ToAdditionalProperties(this Responses.ResponseBase response) =>
         response.LogProbs is { Count: > 0 } logProbs
-            ? new AdditionalPropertiesDictionary { ["logprobs"] = logProbs }
+            ? new AdditionalPropertiesDictionary { [OllamaProperties.LogProbs] = logProbs }
             : null;
 
     /// <summary>

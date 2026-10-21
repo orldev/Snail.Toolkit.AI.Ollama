@@ -1,1 +1,9 @@
 #nullable enable
+const Snail.Toolkit.AI.Ollama.OllamaProperties.KeepAlive = "keep_alive" -> string!
+const Snail.Toolkit.AI.Ollama.OllamaProperties.LogProbs = "logprobs" -> string!
+const Snail.Toolkit.AI.Ollama.OllamaProperties.MinP = "min_p" -> string!
+const Snail.Toolkit.AI.Ollama.OllamaProperties.NumCtx = "num_ctx" -> string!
+const Snail.Toolkit.AI.Ollama.OllamaProperties.Think = "think" -> string!
+const Snail.Toolkit.AI.Ollama.OllamaProperties.TopLogProbs = "top_logprobs" -> string!
+const Snail.Toolkit.AI.Ollama.OllamaProperties.Truncate = "truncate" -> string!
+Snail.Toolkit.AI.Ollama.OllamaProperties

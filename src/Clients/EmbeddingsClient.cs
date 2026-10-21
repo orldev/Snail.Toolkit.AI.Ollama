@@ -61,8 +61,8 @@ public class EmbeddingsClient(HttpClient httpClient, IOptions<OllamaOptions> opt
         var request = new EmbeddingsRequest(model, values)
         {
             Dimensions = options?.Dimensions,
-            Truncate = options?.AdditionalProperties?.TryGetValue("truncate", out bool truncate) is true ? truncate : null,
-            KeepAlive = options?.AdditionalProperties?.TryGetValue("keep_alive", out string? keepAlive) is true ? keepAlive : null
+            Truncate = options?.AdditionalProperties?.TryGetValue(OllamaProperties.Truncate, out bool truncate) is true ? truncate : null,
+            KeepAlive = options?.AdditionalProperties?.TryGetValue(OllamaProperties.KeepAlive, out string? keepAlive) is true ? keepAlive : null
         };
 
         var response = await GenerateAsync(request, cancellationToken).ConfigureAwait(false);

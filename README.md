@@ -108,22 +108,22 @@ var options = new ChatOptions
 
 No `think` is sent unless you ask for reasoning: a model without the thinking capability answers 400 to any value. Usage reports `CachedInputTokenCount` from Ollama's prompt cache.
 
-Ollama-specific knobs go through `AdditionalProperties`; an explicit `think` there wins over `Reasoning`:
+Ollama-specific knobs go through `AdditionalProperties`, under the keys `OllamaProperties` names; an explicit `Think` there wins over `Reasoning`. A key is matched exactly and a misspelt one is ignored, so use the constants rather than the strings:
 
 ```csharp
 var options = new ChatOptions
 {
     AdditionalProperties = new()
     {
-        ["think"] = "high",      // boolean or a level the model accepts
-        ["num_ctx"] = 16384,     // raise the context window; images consume it fast
-        ["min_p"] = 0.05f,
-        ["keep_alive"] = "0",    // unload right after; unset leaves the server's OLLAMA_KEEP_ALIVE
-        ["top_logprobs"] = 3     // 0–20 alternatives per token; implies ["logprobs"] = true
+        [OllamaProperties.Think] = "high",       // boolean or a level the model accepts
+        [OllamaProperties.NumCtx] = 16384,       // raise the context window; images consume it fast
+        [OllamaProperties.MinP] = 0.05f,
+        [OllamaProperties.KeepAlive] = "0",      // unload right after; unset leaves the server's OLLAMA_KEEP_ALIVE
+        [OllamaProperties.TopLogProbs] = 3       // 0–20 alternatives per token; implies LogProbs = true
     }
 };
 
-var logProbs = (IReadOnlyList<LogProbResult>)response.AdditionalProperties!["logprobs"];
+var logProbs = (IReadOnlyList<LogProbResult>)response.AdditionalProperties![OllamaProperties.LogProbs];
 ```
 
 ## Embeddings
@@ -145,7 +145,7 @@ Shorten vectors of models trained for it with `Dimensions`, and make overlong in
 var embeddings = await ollama.Embeddings.GenerateAsync(["…"], new EmbeddingGenerationOptions
 {
     Dimensions = 256,
-    AdditionalProperties = new() { ["truncate"] = false }   // 400 instead of a vector of the first lines
+    AdditionalProperties = new() { [OllamaProperties.Truncate] = false }   // 400 instead of a vector of the first lines
 });
 ```
 

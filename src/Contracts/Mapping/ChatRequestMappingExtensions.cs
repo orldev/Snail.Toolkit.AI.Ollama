@@ -80,7 +80,7 @@ internal static class ChatRequestMappingExtensions
             : [];
 
     /// <summary>
-    /// An explicit AdditionalProperties["think"] wins; otherwise the MEAI reasoning effort picks the level.
+    /// An explicit <see cref="OllamaProperties.Think"/> wins; otherwise the MEAI reasoning effort picks the level.
     /// </summary>
     /// <remarks>
     /// Measured on Ollama 0.35.0: a model whose /api/show lists only [false, true] still accepts "low",
@@ -88,7 +88,7 @@ internal static class ChatRequestMappingExtensions
     /// think value with 400 — so nothing is sent unless the caller asked for reasoning.
     /// </remarks>
     private static object? ToThink(this ChatOptions? options) =>
-        options?.AdditionalProperties?.GetValueOrDefault("think")
+        options?.AdditionalProperties?.GetValueOrDefault(OllamaProperties.Think)
         ?? options?.Reasoning?.Effort switch
         {
             ReasoningEffort.None => false,
@@ -103,14 +103,14 @@ internal static class ChatRequestMappingExtensions
     /// Asking for alternatives implies asking for log probabilities, which Ollama otherwise leaves off.
     /// </summary>
     private static int? ToTopLogProbs(this ChatOptions? options) =>
-        options?.AdditionalProperties?.TryGetValue("top_logprobs", out int top) is true ? top : null;
+        options?.AdditionalProperties?.TryGetValue(OllamaProperties.TopLogProbs, out int top) is true ? top : null;
 
     /// <summary>
-    /// An explicit AdditionalProperties["logprobs"] wins; asking for alternatives turns them on.
+    /// An explicit <see cref="OllamaProperties.LogProbs"/> wins; asking for alternatives turns them on.
     /// </summary>
     private static bool? ToLogProbs(this ChatOptions? options)
     {
-        if (options?.AdditionalProperties?.TryGetValue("logprobs", out bool logProbs) is true)
+        if (options?.AdditionalProperties?.TryGetValue(OllamaProperties.LogProbs, out bool logProbs) is true)
         {
             return logProbs;
         }
@@ -122,7 +122,7 @@ internal static class ChatRequestMappingExtensions
     /// How long Ollama keeps the model loaded after the call; unset leaves the server's OLLAMA_KEEP_ALIVE.
     /// </summary>
     private static string? ToKeepAlive(this ChatOptions? options) =>
-        options?.AdditionalProperties?.TryGetValue("keep_alive", out string? keepAlive) is true ? keepAlive : null;
+        options?.AdditionalProperties?.TryGetValue(OllamaProperties.KeepAlive, out string? keepAlive) is true ? keepAlive : null;
 
     /// <summary>
     /// A tool result carries only the call id; the function name Ollama wants in tool_name
@@ -203,8 +203,8 @@ internal static class ChatRequestMappingExtensions
         Stop = options.StopSequences is { Count: > 0 } stops ? [.. stops] : null,
         PresencePenalty = options.PresencePenalty,
         FrequencyPenalty = options.FrequencyPenalty,
-        NumCtx = options.AdditionalProperties?.TryGetValue("num_ctx", out int numCtx) is true ? numCtx : null,
-        MinP = options.AdditionalProperties?.TryGetValue("min_p", out float minP) is true ? minP : null
+        NumCtx = options.AdditionalProperties?.TryGetValue(OllamaProperties.NumCtx, out int numCtx) is true ? numCtx : null,
+        MinP = options.AdditionalProperties?.TryGetValue(OllamaProperties.MinP, out float minP) is true ? minP : null
     };
 
     /// <summary>
