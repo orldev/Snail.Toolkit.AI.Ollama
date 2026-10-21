@@ -15,7 +15,7 @@ internal abstract record ResponseBase
     public DateTimeOffset CreatedAt { get; init; }
 
     [JsonPropertyName("done")]
-    public bool Done { get; init; }
+    public bool IsDone { get; init; }
 
     /// <summary>
     /// Why generation stopped, e.g. "stop" or "length". Present only on the final chunk.

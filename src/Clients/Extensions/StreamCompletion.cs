@@ -32,7 +32,7 @@ internal static class StreamCompletion
 
             yield return chunk;
 
-            if (chunk.Done)
+            if (chunk.IsDone)
             {
                 yield break;
             }

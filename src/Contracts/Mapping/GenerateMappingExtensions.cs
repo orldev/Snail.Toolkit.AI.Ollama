@@ -14,9 +14,9 @@ internal static class GenerateMappingExtensions
     public static StreamChunk ToStreamChunk(this GenerateResponse response) => new(
         Model: response.Model,
         Content: response.Response,
-        IsDone: response.Done,
+        IsDone: response.IsDone,
         Thinking: string.IsNullOrEmpty(response.Thinking) ? null : response.Thinking,
-        DoneReason: response.Done ? response.DoneReason : null,
-        Usage: response.Done ? response.ToUsageDetails() : null,
+        DoneReason: response.IsDone ? response.DoneReason : null,
+        Usage: response.IsDone ? response.ToUsageDetails() : null,
         LogProbs: response.LogProbs is { Count: > 0 } logProbs ? logProbs : null);
 }

@@ -30,7 +30,7 @@ internal static class ChatMappingExtensions
         var toolNamesByCallId = MapToolNamesByCallId(history);
         var conversation = history.SelectMany(m => m.ToInternalMessages(toolNamesByCallId));
 
-        return new Requests.ChatRequest(model, [.. options.ToInstructionMessages(), .. conversation])
+        var request = new Requests.ChatRequest(model, [.. options.ToInstructionMessages(), .. conversation])
         {
             Options = options?.ToInternalOptions(),
             Tools = options?.ToolMode is NoneChatToolMode
@@ -51,6 +51,8 @@ internal static class ChatMappingExtensions
                 _ => null
             }
         };
+
+        return request;
     }
 
     /// <summary>
@@ -242,7 +244,7 @@ internal static class ChatMappingExtensions
 
         MapToolCallsToContents(response.Message.ToolCalls, update.Contents);
 
-        if (response.Done)
+        if (response.IsDone)
         {
             update.FinishReason = response.ToFinishReason();
 
@@ -261,7 +263,7 @@ internal static class ChatMappingExtensions
     /// </summary>
     private static ChatFinishReason? ToFinishReason(this Responses.ChatResponse response) => response switch
     {
-        { Done: false } => null,
+        { IsDone: false } => null,
         { Message.ToolCalls: { } calls } when calls.Any() => ChatFinishReason.ToolCalls,
         { DoneReason: "stop" } => ChatFinishReason.Stop,
         { DoneReason: "length" } => ChatFinishReason.Length,

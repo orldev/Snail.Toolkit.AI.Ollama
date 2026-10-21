@@ -52,6 +52,7 @@ public class OllamaToolCallingTests
 
         var client = new ChatClientBuilder(inner).UseFunctionInvocation().Build();
         var options = new ChatOptions { ModelId = Model, Tools = [getWeather] };
+
         return (client, options, () => invoked);
     }
 

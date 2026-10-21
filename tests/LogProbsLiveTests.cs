@@ -43,11 +43,11 @@ public class LogProbsLiveTests
 
         List<StreamChunk> chunks = [];
         await foreach (var chunk in client.StreamAsync(new GenerateRequest(Model, "Say hi.")
-                       {
-                           LogProbs = true,
-                           Think = false,
-                           Options = new ModelOptions { MaxTokens = 5 }
-                       }))
+        {
+            LogProbs = true,
+            Think = false,
+            Options = new ModelOptions { MaxTokens = 5 }
+        }))
         {
             chunks.Add(chunk);
         }

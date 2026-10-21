@@ -30,9 +30,9 @@ public class ModelsClientTests
 
     private static ModelsClient CreateClient(string path, string body, HttpStatusCode status = HttpStatusCode.OK) =>
         new(new HttpClient(new RoutingHandler(new Dictionary<string, (HttpStatusCode, string)> { [path] = (status, body) }))
-            {
-                BaseAddress = new Uri("http://localhost:11434")
-            },
+        {
+            BaseAddress = new Uri("http://localhost:11434")
+        },
             Options.Create(new OllamaOptions()));
 
     [Fact]

@@ -112,7 +112,7 @@ public class ChatClientTests
         var exception = await Assert.ThrowsAsync<HttpBuilderException>(
             () => client.GetResponseAsync([new ChatMessage(ChatRole.User, "hi")]));
 
-        Assert.Contains("model 'missing' not found", exception.Body);
+        Assert.Contains("model 'missing' not found", exception.Body, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -187,12 +187,12 @@ public class ChatClientTests
             new ChatOptions { Tools = [getWeather] });
 
         Assert.True(invoked);
-        Assert.Contains("18C", response.Text);
+        Assert.Contains("18C", response.Text, StringComparison.Ordinal);
 
         var secondBody = JsonDocument.Parse(handler.RequestBodies[1]).RootElement;
         var toolMessage = secondBody.GetProperty("messages").EnumerateArray()
             .Single(m => m.GetProperty("role").GetString() == "tool");
         Assert.Equal("get_current_weather", toolMessage.GetProperty("tool_name").GetString());
-        Assert.Contains("18C", toolMessage.GetProperty("content").GetString());
+        Assert.Contains("18C", toolMessage.GetProperty("content").GetString(), StringComparison.Ordinal);
     }
 }

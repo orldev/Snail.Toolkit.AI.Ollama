@@ -47,7 +47,7 @@ public class EmbeddingsClientTests
         Assert.Equal([0.1f, 0.2f], embeddings[0].Vector.ToArray());
         Assert.Equal("embed-model", embeddings[0].ModelId);
         Assert.Equal(7, embeddings.Usage!.InputTokenCount);
-        Assert.Contains("\"embed-model\"", handler.RequestBody);
+        Assert.Contains("\"embed-model\"", handler.RequestBody, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -98,8 +98,8 @@ public class EmbeddingsClientTests
 
         await ((IEmbeddingGenerator<string, Embedding<float>>)client).GenerateAsync(["one"]);
 
-        Assert.DoesNotContain("dimensions", handler.RequestBody);
-        Assert.DoesNotContain("truncate", handler.RequestBody);
-        Assert.DoesNotContain("keep_alive", handler.RequestBody);
+        Assert.DoesNotContain("dimensions", handler.RequestBody, StringComparison.Ordinal);
+        Assert.DoesNotContain("truncate", handler.RequestBody, StringComparison.Ordinal);
+        Assert.DoesNotContain("keep_alive", handler.RequestBody, StringComparison.Ordinal);
     }
 }
