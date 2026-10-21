@@ -32,7 +32,7 @@ public class SystemOneClientTests
             HttpRequestMessage request, CancellationToken cancellationToken)
         {
             RequestPath = request.RequestUri?.AbsolutePath;
-            RequestText = await request.Content!.ReadAsStringAsync(cancellationToken);
+            RequestText = await request.Content.ReadAsSentAsync(cancellationToken);
             RequestBody = JsonDocument.Parse(RequestText).RootElement;
 
             return new HttpResponseMessage(HttpStatusCode.OK)

@@ -23,9 +23,8 @@ public class ChatClientTests
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            RequestBodies.Add(request.Content is null
-                ? string.Empty
-                : await request.Content.ReadAsStringAsync(cancellationToken));
+            RequestBodies.Add(await request.Content.ReadAsSentAsync(cancellationToken));
+
             return responder(request);
         }
     }

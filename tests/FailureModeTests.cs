@@ -1,3 +1,4 @@
+using System.IO.Pipelines;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -25,7 +26,7 @@ public class FailureModeTests
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            string body = await request.Content!.ReadAsStringAsync(cancellationToken);
+            string body = await request.Content.ReadAsSentAsync(cancellationToken);
 
             lock (RequestBodies)
             {
@@ -40,6 +41,15 @@ public class FailureModeTests
                 Content = new StringContent(response, Encoding.UTF8, "application/x-ndjson")
             };
         }
+    }
+
+    /// <summary>
+    /// Answers 200 with a body that holds what was written to the pipe and never ends.
+    /// </summary>
+    private sealed class Unending(Pipe pipe) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(pipe.Reader.AsStream()) });
     }
 
     private static StubHandler Answering(string response) => new((_, _) => Task.FromResult(response));
@@ -197,5 +207,47 @@ public class FailureModeTests
             .ToList();
         Assert.Equal(200, sent.Distinct().Count());
         Assert.All(sent, pair => Assert.Equal($"question {pair.Model!["model-".Length..]}", pair.Text));
+    }
+
+    /// <summary>
+    /// Windows line ends and blank keep-alive lines between chunks must neither end the stream nor fail it.
+    /// </summary>
+    [Fact]
+    public async Task ChatStream_CrlfAndBlankLines_ReadsEveryChunk()
+    {
+        string stream = "{\"model\":\"m\",\"created_at\":\"2026-01-01T00:00:00Z\",\"message\":{\"role\":\"assistant\",\"content\":\"a\"},\"done\":false}\r\n\r\n   \n"
+                        + Reply + "\r\n";
+        var client = Chat(Answering(stream));
+
+        List<string> texts = [];
+
+        await foreach (var update in client.GetStreamingResponseAsync([new ChatMessage(ChatRole.User, "hi")]))
+        {
+            texts.Add(update.Text);
+        }
+
+        Assert.Equal(["a", "ok"], texts);
+    }
+
+    /// <summary>
+    /// A caller who stops waiting mid-generation must see a cancellation, not the IOException of a broken stream.
+    /// </summary>
+    [Fact]
+    public async Task ChatStream_CallerCancelsMidStream_ThrowsOperationCanceled()
+    {
+        var pipe = new Pipe();
+        await pipe.Writer.WriteAsync(Encoding.UTF8.GetBytes("{\"model\":\"m\",\"created_at\":\"2026-01-01T00:00:00Z\",\"message\":{\"role\":\"assistant\",\"content\":\"a\"},\"done\":false}\n"));
+        var streaming = new ChatClient(
+            new HttpClient(new Unending(pipe)) { BaseAddress = new Uri("http://localhost:11434/") },
+            Options.Create(new OllamaOptions { DefaultModel = "m" }));
+        using var stop = new CancellationTokenSource();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+        {
+            await foreach (var _ in streaming.GetStreamingResponseAsync([new ChatMessage(ChatRole.User, "hi")], cancellationToken: stop.Token))
+            {
+                await stop.CancelAsync();
+            }
+        });
     }
 }

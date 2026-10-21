@@ -25,7 +25,7 @@ public class GenerateClientTests
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            Body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken)).RootElement;
+            Body = JsonDocument.Parse(await request.Content.ReadAsSentAsync(cancellationToken)).RootElement;
 
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
