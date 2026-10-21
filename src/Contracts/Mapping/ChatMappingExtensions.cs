@@ -57,7 +57,7 @@ internal static class ChatMappingExtensions
             Options = options?.ToInternalOptions(),
             Tools = options?.ToolMode is NoneChatToolMode
                 ? null
-                : options?.Tools?.OfType<AIFunction>().Select(f => f.ToInternalTool()),
+                : options?.Tools?.OfType<AIFunctionDeclaration>().Select(f => f.ToInternalTool()),
             Think = options.ToThink(),
             KeepAlive = options?.AdditionalProperties?.TryGetValue("keep_alive", out string? keepAlive) is true
                 ? keepAlive
@@ -202,7 +202,10 @@ internal static class ChatMappingExtensions
         MinP = options.AdditionalProperties?.TryGetValue("min_p", out float minP) is true ? minP : null
     };
 
-    private static Schema.ToolDefinition ToInternalTool(this AIFunction function) => new(
+    /// <summary>
+    /// Any declared function, invocable or not: a declaration-only tool is one the application calls itself.
+    /// </summary>
+    private static Schema.ToolDefinition ToInternalTool(this AIFunctionDeclaration function) => new(
         Type: "function",
         Function: new Schema.ToolFunction(
             Name: function.Name,

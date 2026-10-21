@@ -422,6 +422,24 @@ public class ChatMappingTests
         Assert.Null(request.Tools);
     }
 
+    /// <summary>
+    /// MEAI 10 declares a tool the application calls itself as an AIFunctionDeclaration, the base of AIFunction;
+    /// a mapping that kept only AIFunction sent "tools":[] and the model never learned the tool existed.
+    /// </summary>
+    [Fact]
+    public void ToInternalRequest_DeclarationOnlyTool_IsOfferedToTheModel()
+    {
+        var declaration = AIFunctionFactory.Create((string city) => city, "get_weather", "Weather of a city").AsDeclarationOnly();
+
+        var request = new List<ChatMessage> { new(ChatRole.User, "Weather?") }
+            .ToInternalRequest(new ChatOptions { Tools = [declaration] }, "m");
+
+        var tool = Assert.Single(request.Tools!);
+        Assert.Equal("get_weather", tool.Function.Name);
+        Assert.Equal("Weather of a city", tool.Function.Description);
+        Assert.Equal(JsonValueKind.Object, tool.Function.Parameters.ValueKind);
+    }
+
     [Fact]
     public void ToAiResponse_CachedPrompt_ReportsCachedInputTokens()
     {

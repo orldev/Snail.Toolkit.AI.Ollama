@@ -86,4 +86,24 @@ public class OllamaToolCallingTests
         Assert.False(string.IsNullOrWhiteSpace(response.Text));
         Assert.True(response.Usage is { TotalTokenCount: > 0 }, "Usage was not reported.");
     }
+
+    /// <summary>
+    /// A declaration-only tool is called by the application, so the call itself must come back to the caller.
+    /// </summary>
+    [OllamaFact]
+    public async Task GetResponseAsync_DeclarationOnlyTool_ModelCallsIt()
+    {
+        var declaration = AIFunctionFactory
+            .Create((string location) => location, "get_current_weather", "Gets the current weather for a location")
+            .AsDeclarationOnly();
+        using var client = new ChatClient(
+            new HttpClient { BaseAddress = new Uri(BaseUrl), Timeout = TimeSpan.FromMinutes(5) },
+            Options.Create(new OllamaOptions { BaseUrl = BaseUrl, DefaultModel = Model }));
+
+        var response = await client.GetResponseAsync([CreatePrompt()], new ChatOptions { ModelId = Model, Tools = [declaration] });
+
+        var call = Assert.Single(response.Messages.SelectMany(message => message.Contents).OfType<FunctionCallContent>());
+        Assert.Equal("get_current_weather", call.Name);
+        Assert.Equal(ChatFinishReason.ToolCalls, response.FinishReason);
+    }
 }
