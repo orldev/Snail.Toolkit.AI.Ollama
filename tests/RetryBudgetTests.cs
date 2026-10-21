@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Net;
 using System.Text;
 using Microsoft.Extensions.AI;
@@ -20,17 +21,32 @@ public class RetryBudgetTests
 
         public int Calls => _calls;
 
-        protected override Task<HttpResponseMessage> SendAsync(
+        public List<string> Bodies { get; } = [];
+
+        protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
         {
             int call = Interlocked.Increment(ref _calls);
             var status = statuses[Math.Min(call, statuses.Length) - 1];
 
-            return Task.FromResult(new HttpResponseMessage(status)
+            Bodies.Add(await request.Content.ReadAsSentAsync(cancellationToken));
+
+            return new HttpResponseMessage(status)
             {
                 Content = new StringContent("""{"model":"e","embeddings":[[0.1]]}""", Encoding.UTF8, "application/json")
-            });
+            };
         }
+    }
+
+    /// <summary>A sequence that can be read once, like the rows of a reader or the items of a channel.</summary>
+    private sealed class ReadOnce(params string[] items) : IEnumerable<string>
+    {
+        private int _reads;
+
+        public IEnumerator<string> GetEnumerator() =>
+            Interlocked.Increment(ref _reads) == 1 ? ((IEnumerable<string>)items).GetEnumerator() : Enumerable.Empty<string>().GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
     private static ServiceProvider Build(TimeSpan timeout, HttpMessageHandler? transport = null)
@@ -89,5 +105,22 @@ public class RetryBudgetTests
 
         Assert.Single(embeddings);
         Assert.Equal(2, transport.Calls);
+    }
+
+    /// <summary>
+    /// A retry serializes the request again, so the input is enumerated once per attempt: a sequence that reads
+    /// once reached the retry empty, and Ollama's 200 with no vectors came back as the answer to the original texts.
+    /// </summary>
+    [Fact]
+    public async Task Embeddings_RetriedAfter503_ResendsTheSameInput()
+    {
+        var transport = new FlakyHandler(HttpStatusCode.ServiceUnavailable, HttpStatusCode.OK);
+        await using var provider = Build(TimeSpan.FromSeconds(30), transport);
+
+        await provider.GetRequiredService<IEmbeddingsClient>().GenerateAsync(new ReadOnce("first", "second"));
+
+        Assert.Equal(2, transport.Bodies.Count);
+        Assert.Equal(transport.Bodies[0], transport.Bodies[1]);
+        Assert.Contains("\"input\":[\"first\",\"second\"]", transport.Bodies[1], StringComparison.Ordinal);
     }
 }

@@ -26,15 +26,24 @@ public class EmbeddingsClient(HttpClient httpClient, IOptions<OllamaOptions> opt
 
     /// <exception cref="HttpBuilderException">Thrown when the API call returns a non-success status code.</exception>
     /// <exception cref="TimeoutException">Thrown when OllamaOptions.Timeout expires first.</exception>
+    /// <remarks>
+    /// The input is read once, before the call: a retry serializes the request again, and a sequence that
+    /// reads once reached the retry empty — Ollama answered 200 with no vectors.
+    /// </remarks>
     public async Task<EmbeddingsResponse> GenerateAsync(
         EmbeddingsRequest request,
-        CancellationToken cancellationToken = default) =>
-        await _options
+        CancellationToken cancellationToken = default)
+    {
+        var sent = request with { Input = [.. request.Input] };
+
+        var response = await _options
             .WithinTimeoutAsync(
-                token => Post(EmbedEndpoint).AsJson(request, Wire.EmbeddingsRequest).SendAsync(Wire.EmbeddingsResponse, token),
+                token => Post(EmbedEndpoint).AsJson(sent, Wire.EmbeddingsRequest).SendAsync(Wire.EmbeddingsResponse, token),
                 cancellationToken)
-            .ConfigureAwait(false)
-        ?? throw new InvalidOperationException("Failed to deserialize the embeddings response.");
+            .ConfigureAwait(false);
+
+        return response ?? throw new InvalidOperationException("Failed to deserialize the embeddings response.");
+    }
 
     /// <summary>
     /// MEAI path: the model falls back to the configured default, usage comes from
