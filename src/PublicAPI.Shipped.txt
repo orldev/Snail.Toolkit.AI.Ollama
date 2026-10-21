@@ -441,6 +441,7 @@ Snail.Toolkit.AI.Ollama.Contracts.Schema.TopLogProb.Logprob.init -> void
 Snail.Toolkit.AI.Ollama.Contracts.Schema.TopLogProb.Token.get -> string!
 Snail.Toolkit.AI.Ollama.Contracts.Schema.TopLogProb.Token.init -> void
 Snail.Toolkit.AI.Ollama.Contracts.Schema.TopLogProb.TopLogProb(string! Token, double Logprob, System.Collections.Generic.IReadOnlyList<int>? Bytes) -> void
+Snail.Toolkit.AI.Ollama.OllamaProperties
 Snail.Toolkit.AI.Ollama.ServiceCollectionExtensions
 Snail.Toolkit.AI.Ollama.ServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
 Snail.Toolkit.AI.Ollama.ServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddOllama(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
@@ -448,6 +449,13 @@ Snail.Toolkit.AI.Ollama.ServiceCollectionExtensions.extension(Microsoft.Extensio
 abstract Snail.Toolkit.AI.Ollama.Contracts.Requests.RequestBase.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Requests.RequestBase!
 abstract Snail.Toolkit.AI.Ollama.Contracts.Schema.SystemOneAnswer.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Schema.SystemOneAnswer!
 abstract Snail.Toolkit.AI.Ollama.Contracts.Schema.SystemOneQuestion.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Schema.SystemOneQuestion!
+const Snail.Toolkit.AI.Ollama.OllamaProperties.KeepAlive = "keep_alive" -> string!
+const Snail.Toolkit.AI.Ollama.OllamaProperties.LogProbs = "logprobs" -> string!
+const Snail.Toolkit.AI.Ollama.OllamaProperties.MinP = "min_p" -> string!
+const Snail.Toolkit.AI.Ollama.OllamaProperties.NumCtx = "num_ctx" -> string!
+const Snail.Toolkit.AI.Ollama.OllamaProperties.Think = "think" -> string!
+const Snail.Toolkit.AI.Ollama.OllamaProperties.TopLogProbs = "top_logprobs" -> string!
+const Snail.Toolkit.AI.Ollama.OllamaProperties.Truncate = "truncate" -> string!
 override Snail.Toolkit.AI.Ollama.Contracts.Requests.ChatRequest.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Requests.ChatRequest!
 override Snail.Toolkit.AI.Ollama.Contracts.Requests.ChatRequest.EqualityContract.get -> System.Type!
 override Snail.Toolkit.AI.Ollama.Contracts.Requests.ChatRequest.Equals(object? obj) -> bool
