@@ -271,7 +271,7 @@ A missing model configuration fails fast with `InvalidOperationException` before
 
 A unary call that outlives `Timeout` throws `TimeoutException`; cancelling your own token still throws `OperationCanceledException`, so the two are easy to tell apart.
 
-Streams never end quietly on a failure. Once the 200 headers are out, Ollama can only report an error as a line of the stream: that surfaces as `InvalidOperationException` carrying Ollama's own message. A stream that closes before its final chunk — a crashed runner, a proxy cutting the connection — throws `IOException` instead of handing you a truncated answer.
+Streams never end quietly on a failure. Once the 200 headers are out, Ollama can only report an error as a line of the stream: that surfaces as `InvalidOperationException` carrying Ollama's own message. A stream that closes before its final chunk — a crashed runner, a proxy cutting the connection — or carries a line that is not JSON throws `IOException` instead of handing you a truncated answer.
 
 ## Native AOT
 

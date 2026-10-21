@@ -18,7 +18,7 @@ public class GenerateClient(HttpClient httpClient)
 
     /// <inheritdoc />
     /// <exception cref="InvalidOperationException">Thrown when Ollama reports a failure inside the stream.</exception>
-    /// <exception cref="IOException">Thrown when the stream ends before its final chunk.</exception>
+    /// <exception cref="IOException">Thrown when the stream ends before its final chunk or carries a line that is not JSON.</exception>
     public async IAsyncEnumerable<StreamChunk> StreamAsync(
         GenerateRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

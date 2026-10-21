@@ -55,7 +55,7 @@ public class ChatClient(HttpClient httpClient, IOptions<OllamaOptions> options)
 
     /// <inheritdoc />
     /// <exception cref="InvalidOperationException">Thrown when Ollama reports a failure inside the stream.</exception>
-    /// <exception cref="IOException">Thrown when the stream ends before its final chunk.</exception>
+    /// <exception cref="IOException">Thrown when the stream ends before its final chunk or carries a line that is not JSON.</exception>
     /// <exception cref="NotSupportedException">Thrown for an attachment that is remote, or inline but not an image.</exception>
     public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
         IEnumerable<ChatMessage> messages, ChatOptions? options = null,

@@ -120,6 +120,40 @@ public class FailureModeTests
     }
 
     /// <summary>
+    /// After the 200 headers a proxy or a crashed runner can leave a line that is not JSON. It surfaced as a
+    /// JsonException, outside the IOException and InvalidOperationException the README promises for a broken stream.
+    /// </summary>
+    [Fact]
+    public async Task ChatStream_LineThatIsNotJson_ThrowsIOException()
+    {
+        var client = Chat(Answering("""
+            {"model":"m","created_at":"2026-01-01T00:00:00Z","message":{"role":"assistant","content":"Once"},"done":false}
+            <html><body>502 Bad Gateway</body></html>
+            """));
+
+        var failure = await Assert.ThrowsAsync<IOException>(async () =>
+        {
+            await foreach (var _ in client.GetStreamingResponseAsync([new ChatMessage(ChatRole.User, "hi")])) { }
+        });
+
+        Assert.IsType<JsonException>(failure.InnerException);
+    }
+
+    [Fact]
+    public async Task GenerateStream_LineThatIsNotJson_ThrowsIOException()
+    {
+        var client = Generate(Answering("""
+            {"model":"m","response":"Once upon","done":false}
+            {"model":"m","response":
+            """));
+
+        await Assert.ThrowsAsync<IOException>(async () =>
+        {
+            await foreach (var _ in client.StreamAsync(new GenerateRequest("m", "story"))) { }
+        });
+    }
+
+    /// <summary>
     /// Endpoints written as "/api/chat" are absolute paths, so they replace the base address path instead of
     /// extending it: Ollama published under a proxy prefix is unreachable.
     /// </summary>
