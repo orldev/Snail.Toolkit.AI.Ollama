@@ -78,6 +78,31 @@ public class SystemOneLiveTests
         Assert.Equal("blue", Assert.IsType<ChoiceAnswer>(response.Answers["color"]).Choice);
     }
 
+    /// <summary>
+    /// A Russian line reaches the model as written. Escaped, the same line read as new work at 0.25; the state's input
+    /// tokens are the other witness — escaped, this line cost 347 tokens, written about 200.
+    /// </summary>
+    [SystemOneFact]
+    public async Task AnswerAsync_StateInRussian_IsReadAsWritten()
+    {
+        var response = await CreateClient().AnswerAsync(new SystemOneRequest(
+            Environment.GetEnvironmentVariable("OLLAMA_SYSTEMONE_MODEL")!,
+            new Dictionary<string, object?> { ["line"] = "Сколько задач сейчас в очереди?" },
+            new Dictionary<string, SystemOneQuestion>
+            {
+                ["kind"] = new ChoiceQuestion("What does the chat line ask for?", new Dictionary<string, string?>
+                {
+                    ["question"] = "A question to the platform about itself",
+                    ["new"] = "New work to do",
+                    ["schedule"] = "Work to repeat on a schedule",
+                    ["unsure"] = "Not clear"
+                })
+            }));
+
+        Assert.Equal("question", Assert.IsType<ChoiceAnswer>(response.Answers["kind"]).Choice);
+        Assert.InRange(response.Usage.InputTokens, 1, 260);
+    }
+
     [SystemOneFact]
     public async Task AnswerAsync_EveryQuestionKind_ComesBackAsItsOwnAnswer()
     {

@@ -26,11 +26,14 @@ public class SystemOneClientTests
 
         public JsonElement RequestBody { get; private set; }
 
+        public string RequestText { get; private set; } = string.Empty;
+
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
         {
             RequestPath = request.RequestUri?.AbsolutePath;
-            RequestBody = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken)).RootElement;
+            RequestText = await request.Content!.ReadAsStringAsync(cancellationToken);
+            RequestBody = JsonDocument.Parse(RequestText).RootElement;
 
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -64,6 +67,23 @@ public class SystemOneClientTests
         Assert.Equal("choice", label.GetProperty("type").GetString());
         Assert.Equal("Payments and refunds", label.GetProperty("criteria").GetProperty("billing").GetString());
         Assert.Equal(JsonValueKind.Null, label.GetProperty("criteria").GetProperty("bug").ValueKind);
+    }
+
+    /// <summary>
+    /// The state reaches the decision model as written: escaped as \uXXXX, a Russian line was read as escapes and judged worse.
+    /// </summary>
+    [Fact]
+    public async Task AnswerAsync_StateInRussian_IsSentWithItsLettersAsWritten()
+    {
+        var handler = new StubHandler(ChoiceResponse);
+        var client = CreateClient(handler);
+
+        await client.AnswerAsync(new SystemOneRequest("nimble", new Dictionary<string, object?> { ["line"] = "Сколько задач в очереди? \"да\"\n" },
+            new Dictionary<string, SystemOneQuestion> { ["label"] = new NoulQuestion("Вопрос платформе?") }));
+
+        Assert.Contains("\"line\":\"Сколько задач в очереди? \\\"да\\\"\\n\"", handler.RequestText, StringComparison.Ordinal);
+        Assert.Contains("\"instructions\":\"Вопрос платформе?\"", handler.RequestText, StringComparison.Ordinal);
+        Assert.DoesNotContain("\\u04", handler.RequestText, StringComparison.Ordinal);
     }
 
     /// <summary>
