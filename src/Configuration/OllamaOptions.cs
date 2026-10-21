@@ -21,6 +21,10 @@ public class OllamaOptions
     /// Bounds unary (non-streaming) requests only. Streams run until the model finishes
     /// or the caller's <see cref="CancellationToken"/> fires.
     /// </summary>
+    /// <remarks>
+    /// Anything past 12 hours, <see cref="System.Threading.Timeout.InfiniteTimeSpan"/> and
+    /// <see cref="TimeSpan.MaxValue"/> included, is held at 12 hours.
+    /// </remarks>
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(100);
 
     /// <summary>

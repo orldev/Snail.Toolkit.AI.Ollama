@@ -169,6 +169,23 @@ public class FailureModeTests
     }
 
     /// <summary>
+    /// "No limit" is commonly written TimeSpan.MaxValue. The retry budget held it at 12 hours, but the unary
+    /// timeout handed it to CancelAfter as it was, which refuses anything past ~49.7 days: every unary call failed
+    /// with ArgumentOutOfRangeException before a byte was sent.
+    /// </summary>
+    [Theory]
+    [InlineData(60)]
+    [InlineData(10_675_199)]
+    public async Task Chat_TimeoutBeyondTimerRange_StillCallsOllama(double days)
+    {
+        var client = Chat(Answering(Reply), timeout: TimeSpan.FromDays(days));
+
+        var response = await client.GetResponseAsync([new ChatMessage(ChatRole.User, "hi")]);
+
+        Assert.Equal("ok", response.Text);
+    }
+
+    /// <summary>
     /// A cancelled caller must still see cancellation, not a timeout.
     /// </summary>
     [Fact]

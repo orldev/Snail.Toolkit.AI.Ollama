@@ -21,8 +21,10 @@ internal static class UnaryTimeout
         Func<CancellationToken, Task<TResult>> call,
         CancellationToken cancellationToken)
     {
+        TimeSpan budget = CallBudget.Of(options.Timeout);
+
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(options.Timeout);
+        timeout.CancelAfter(budget);
 
         try
         {
@@ -32,7 +34,7 @@ internal static class UnaryTimeout
             when (timeout.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
         {
             throw new TimeoutException(
-                $"Ollama did not answer within {options.Timeout}; raise OllamaOptions.Timeout or stream the call.",
+                $"Ollama did not answer within {budget}; raise OllamaOptions.Timeout or stream the call.",
                 canceled);
         }
     }

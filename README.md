@@ -250,7 +250,7 @@ await foreach (var block in ollama.Chats
 | `BaseUrl` | `http://localhost:11434` | Point at `https://ollama.com` for Ollama Cloud. A path prefix behind a proxy (`https://gateway/ollama`) is kept. |
 | `ApiKey` | `null` | Sent as a Bearer token when set; a local Ollama needs none. |
 | `DefaultModel` | `null` | Fallback model; without it every call must set `ChatOptions.ModelId`. |
-| `Timeout` | 100 s | Bounds unary calls, retries included. Streams run until done or the caller's token fires. |
+| `Timeout` | 100 s | Bounds unary calls, retries included; anything past 12 hours, infinite included, is held at 12 hours. Streams run until done or the caller's token fires. |
 
 ## Error handling
 

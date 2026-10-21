@@ -5,6 +5,7 @@ using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using Snail.Toolkit.AI.Ollama.Abstractions;
 using Snail.Toolkit.AI.Ollama.Clients;
+using Snail.Toolkit.AI.Ollama.Clients.Extensions;
 using Snail.Toolkit.AI.Ollama.Configuration;
 
 namespace Snail.Toolkit.AI.Ollama;
@@ -115,7 +116,7 @@ public static class ServiceCollectionExtensions
     private static void AddRetriesForIdempotentCalls(this IHttpClientBuilder builder) =>
         builder.AddStandardResilienceHandler().Configure((resilience, provider) =>
         {
-            TimeSpan budget = CallBudget(provider.GetRequiredService<IOptions<OllamaOptions>>().Value.Timeout);
+            TimeSpan budget = ResilienceBudget(provider.GetRequiredService<IOptions<OllamaOptions>>().Value.Timeout);
 
             resilience.TotalRequestTimeout.Timeout = budget;
             resilience.AttemptTimeout.Timeout = budget;
@@ -123,18 +124,13 @@ public static class ServiceCollectionExtensions
         });
 
     /// <summary>
-    /// The configured timeout, held inside the ranges Polly validates: an infinite or oversized timeout
-    /// becomes 12 hours, anything shorter than a second becomes one second.
+    /// The call budget held inside the ranges Polly validates: anything shorter than a second becomes one second.
     /// </summary>
-    private static TimeSpan CallBudget(TimeSpan timeout)
+    private static TimeSpan ResilienceBudget(TimeSpan timeout)
     {
-        TimeSpan longest = TimeSpan.FromHours(12);
+        TimeSpan budget = CallBudget.Of(timeout);
+        TimeSpan shortest = TimeSpan.FromSeconds(1);
 
-        if (timeout == Timeout.InfiniteTimeSpan || timeout > longest)
-        {
-            return longest;
-        }
-
-        return timeout < TimeSpan.FromSeconds(1) ? TimeSpan.FromSeconds(1) : timeout;
+        return budget < shortest ? shortest : budget;
     }
 }
