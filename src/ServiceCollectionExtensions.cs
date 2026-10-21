@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
+using Polly.Retry;
 using Snail.Toolkit.AI.Ollama.Abstractions;
 using Snail.Toolkit.AI.Ollama.Clients;
 using Snail.Toolkit.AI.Ollama.Clients.Extensions;
@@ -111,7 +112,8 @@ public static class ServiceCollectionExtensions
     /// is derived from it. Fixed budgets contradicted it: a 2-minute attempt under a 100-second call could
     /// never be retried, and a 5-minute total silently capped any Timeout set above it. An attempt may use
     /// the full budget because a slow local model is still working — only a fast failure is worth another
-    /// try. The circuit breaker must sample at least two attempts' worth of time.
+    /// try. The circuit breaker must sample at least two attempts' worth of time. Every retried failure is
+    /// recorded, so a budget that runs out between attempts reports the cause instead of a bare cancellation.
     /// </remarks>
     private static void AddRetriesForIdempotentCalls(this IHttpClientBuilder builder) =>
         builder.AddStandardResilienceHandler().Configure((resilience, provider) =>
@@ -121,7 +123,21 @@ public static class ServiceCollectionExtensions
             resilience.TotalRequestTimeout.Timeout = budget;
             resilience.AttemptTimeout.Timeout = budget;
             resilience.CircuitBreaker.SamplingDuration = budget * 2;
+            resilience.Retry.OnRetry = RecordFailedAttempt;
         });
+
+    /// <summary>
+    /// Records why an attempt is retried: its exception, or the status Ollama answered with.
+    /// </summary>
+    private static ValueTask RecordFailedAttempt(OnRetryArguments<HttpResponseMessage> retry)
+    {
+        var failure = retry.Outcome.Exception
+            ?? new HttpRequestException($"Ollama answered {retry.Outcome.Result?.StatusCode}.", null, retry.Outcome.Result?.StatusCode);
+
+        FailedAttempts.Record(failure);
+
+        return ValueTask.CompletedTask;
+    }
 
     /// <summary>
     /// The call budget held inside the ranges Polly validates: anything shorter than a second becomes one second.

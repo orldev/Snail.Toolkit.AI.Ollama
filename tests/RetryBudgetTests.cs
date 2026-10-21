@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,6 +37,13 @@ public class RetryBudgetTests
                 Content = new StringContent("""{"model":"e","embeddings":[[0.1]]}""", Encoding.UTF8, "application/json")
             };
         }
+    }
+
+    /// <summary>Refuses every connection, as a host with nothing listening on the port does.</summary>
+    private sealed class RefusingHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            throw new HttpRequestException("Connection refused", new SocketException((int)SocketError.ConnectionRefused));
     }
 
     /// <summary>A sequence that can be read once, like the rows of a reader or the items of a channel.</summary>
@@ -105,6 +113,36 @@ public class RetryBudgetTests
 
         Assert.Single(embeddings);
         Assert.Equal(2, transport.Calls);
+    }
+
+    /// <summary>
+    /// Ollama down and a Timeout shorter than the retry delays: the budget ran out between attempts, and the caller
+    /// was told to raise the timeout while the cause — connection refused — was gone from the exception.
+    /// </summary>
+    [Fact]
+    public async Task Embeddings_OllamaDownShortTimeout_TimeoutKeepsTheConnectionFailure()
+    {
+        var transport = new RefusingHandler();
+        await using var provider = Build(TimeSpan.FromSeconds(3), transport);
+
+        var failure = await Assert.ThrowsAsync<TimeoutException>(
+            () => provider.GetRequiredService<IEmbeddingsClient>().GenerateAsync(["one"]));
+
+        Assert.IsType<HttpRequestException>(failure.InnerException);
+        Assert.Contains("Connection refused", failure.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Embeddings_OverloadedPastTimeout_TimeoutNamesTheLastStatus()
+    {
+        var transport = new FlakyHandler(HttpStatusCode.ServiceUnavailable);
+        await using var provider = Build(TimeSpan.FromSeconds(3), transport);
+
+        var failure = await Assert.ThrowsAsync<TimeoutException>(
+            () => provider.GetRequiredService<IEmbeddingsClient>().GenerateAsync(["one"]));
+
+        var cause = Assert.IsType<HttpRequestException>(failure.InnerException);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, cause.StatusCode);
     }
 
     /// <summary>

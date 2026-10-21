@@ -23,6 +23,7 @@ internal static class UnaryTimeout
     {
         TimeSpan budget = CallBudget.Of(options.Timeout);
 
+        using var attempts = FailedAttempts.Watch();
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(budget);
 
@@ -33,9 +34,13 @@ internal static class UnaryTimeout
         catch (OperationCanceledException canceled)
             when (timeout.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
         {
-            throw new TimeoutException(
-                $"Ollama did not answer within {budget}; raise OllamaOptions.Timeout or stream the call.",
-                canceled);
+            throw attempts.Last is { } cause
+                ? new TimeoutException(
+                    $"Ollama did not answer within {budget}: every attempt failed, the last with \"{cause.Message}\"; check that Ollama is running and reachable.",
+                    cause)
+                : new TimeoutException(
+                    $"Ollama did not answer within {budget}; raise OllamaOptions.Timeout or stream the call.",
+                    canceled);
         }
     }
 }
