@@ -69,6 +69,28 @@ public class ModelsClientTests
         Assert.Empty(await client.ListAsync());
     }
 
+    /// <summary>
+    /// /api/show already read capabilities leniently; /api/tags read the same field strictly, so one odd model failed
+    /// the listing of every model.
+    /// </summary>
+    [Fact]
+    public async Task ListAsync_OneOddCapability_StillListsEveryModel()
+    {
+        var client = CreateClient("/api/tags", """
+            {"models":[
+              {"name":"a","model":"a","modified_at":"2026-01-01T00:00:00Z","size":1,"digest":"d","capabilities":["completion"]},
+              {"name":"b","model":"b","modified_at":"2026-01-01T00:00:00Z","size":1,"digest":"d","capabilities":[{"name":"vision"},"tools"]},
+              {"name":"c","model":"c","modified_at":"2026-01-01T00:00:00Z","size":1,"digest":"d","capabilities":"tools"}
+            ]}
+            """);
+
+        var models = await client.ListAsync();
+
+        Assert.Equal(3, models.Count);
+        Assert.Equal(["tools"], models[1].Capabilities);
+        Assert.Null(models[2].Capabilities);
+    }
+
     [Fact]
     public async Task ListRunningAsync_Ps_ReadsMemoryAndExpiry()
     {

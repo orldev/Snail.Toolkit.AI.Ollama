@@ -19,4 +19,4 @@ public sealed record LocalModel(
     [property: JsonPropertyName("size")] long Size,
     [property: JsonPropertyName("digest")] string Digest,
     [property: JsonPropertyName("details")] ModelDetails? Details,
-    [property: JsonPropertyName("capabilities")] IReadOnlyList<string>? Capabilities = null);
+    [property: JsonPropertyName("capabilities"), JsonConverter(typeof(CapabilityNamesConverter))] IReadOnlyList<string>? Capabilities = null);

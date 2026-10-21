@@ -10,7 +10,8 @@ namespace Snail.Toolkit.AI.Ollama.Contracts.Schema;
 /// <remarks>
 /// Capabilities are advisory metadata beside the window, the template and the think values of the same answer. Read
 /// strictly, one entry of an unexpected shape failed the whole /api/show and cost the caller all of them — the same
-/// trade <see cref="Clients.Extensions.Wire"/> already refuses for a reordered "type" field.
+/// trade <see cref="Clients.Extensions.Wire"/> already refuses for a reordered "type" field. /api/tags reads the same
+/// field the same way: there one odd model failed the listing of every model.
 /// </remarks>
 internal sealed class CapabilityNamesConverter : JsonConverter<IReadOnlyList<string>?>
 {
