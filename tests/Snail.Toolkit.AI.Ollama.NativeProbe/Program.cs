@@ -23,7 +23,7 @@ var configuration = new ConfigurationBuilder()
 var services = new ServiceCollection();
 services.AddOllama(configuration.GetSection("Ollama")).AddOllamaSpeech();
 
-foreach (var name in new[] { nameof(IChatClient), nameof(IEmbeddingsClient), nameof(ITextToSpeechClient) })
+foreach (var name in new[] { nameof(IChatClient), nameof(IEmbeddingsClient), nameof(ITextToSpeechClient), nameof(IAccountClient) })
 {
     services.AddHttpClient(name).ConfigurePrimaryHttpMessageHandler(() => new Answers());
 }
@@ -61,6 +61,10 @@ var tuned = await ollama.Embeddings.GenerateAsync(
 var spoken = await provider.GetRequiredService<ITextToSpeechClient>()
     .GetAudioAsync("Hi", new TextToSpeechOptions { ModelId = "phonon", VoiceId = "Zoey" });
 
+var account = provider.GetRequiredService<IAccountClient>();
+var usage = await account.GetUsageAsync(new UsageQuery { IsGroupedByModel = true });
+var balance = await account.GetBalanceAsync();
+
 var isChatted = answer.Text == "Tomorrow too." && answer.FinishReason == ChatFinishReason.ToolCalls
     && call is { Name: "get_weather" } && call.Arguments?["city"]?.ToString() == "Paris"
     && Answers.Chatted.Contains("\"tool_calls\":[{\"id\":\"call1\",\"type\":\"function\",\"function\":{\"name\":\"get_weather\",\"arguments\":{\"city\":\"Berlin\",\"days\":3}}}]", StringComparison.Ordinal)
@@ -77,10 +81,12 @@ var isEmbedded = embeddings.Count == 2 && embeddings[1].Vector.Span[2] == 0.5f &
 var isSpoken = spoken.Contents.OfType<DataContent>().Single() is { MediaType: "audio/wav" } audio
     && audio.Data.Span.SequenceEqual(Answers.Wave)
     && Answers.Spoken == """{"model":"phonon","input":"Hi","voice":"Zoey"}""";
+var isAccounted = usage.Totals.Groups?.Single().Model == "clef:cloud" && usage.Buckets.Single().IsPartial
+    && balance.Included.BalanceUsd == 3.5 && balance.Purchased.BalanceUsd == 20;
 
-Console.WriteLine($"chatted {isChatted}, streamed {isStreamed}, embedded {isEmbedded}, spoken {isSpoken}");
+Console.WriteLine($"chatted {isChatted}, streamed {isStreamed}, embedded {isEmbedded}, spoken {isSpoken}, accounted {isAccounted}");
 
-return isChatted && isStreamed && isEmbedded && isSpoken ? 0 : 1;
+return isChatted && isStreamed && isEmbedded && isSpoken && isAccounted ? 0 : 1;
 
 /// <summary>Ollama's answers held in memory, by path, under the base address the configuration names.</summary>
 internal sealed class Answers : HttpMessageHandler
@@ -96,7 +102,7 @@ internal sealed class Answers : HttpMessageHandler
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        var sent = await request.Content!.ReadAsStringAsync(cancellationToken);
+        var sent = request.Content is null ? string.Empty : await request.Content.ReadAsStringAsync(cancellationToken);
 
         if (request.RequestUri!.AbsoluteUri == "http://probe.local/ollama/v1/audio/speech")
         {
@@ -123,6 +129,10 @@ internal sealed class Answers : HttpMessageHandler
                 """{"model":"llama3.2","created_at":"2026-10-13T10:00:01Z","message":{"role":"assistant","content":"Tomorrow too.","tool_calls":[{"function":{"name":"get_weather","arguments":{"city":"Paris","days":1}}}]},"done":true,"done_reason":"stop"}""",
             "http://probe.local/ollama/api/embed" =>
                 """{"model":"llama3.2","embeddings":[[0.1,0.2,0.3],[0.3,0.4,0.5]],"prompt_eval_count":4}""",
+            "http://probe.local/ollama/api/usage?range=7d&scope=self&group_by=model" =>
+                """{"range":"7d","scope":"self","granularity":"day","group_by":"model","from":"2026-10-21T00:00:00Z","until":"2026-10-28T13:00:00Z","totals":{"request_count":2,"groups":[{"model":"clef:cloud","request_count":2}]},"buckets":[{"from":"2026-10-28T00:00:00Z","until":"2026-10-29T00:00:00Z","partial":true,"request_count":2}]}""",
+            "http://probe.local/ollama/api/balance" =>
+                """{"included":{"balance_usd":3.5,"allowance_usd":10,"period":{"from":"2026-10-01T00:00:00Z","until":"2026-11-01T00:00:00Z"}},"purchased":{"balance_usd":20}}""",
             _ => null
         };
 

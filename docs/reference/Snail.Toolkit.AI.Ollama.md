@@ -30,6 +30,15 @@ Registers the Ollama feature: options, typed clients and the facade.
 
 ## Snail.Toolkit.AI.Ollama.Abstractions
 
+### interface IAccountClient
+
+What the ollama.com account has spent on cloud models, web search and web fetch, and what credits it has left.
+
+| Member | Summary |
+| --- | --- |
+| `Task<Balance> GetBalanceAsync(CancellationToken cancellationToken = default)` | The included and purchased credits left. |
+| `Task<UsageReport> GetUsageAsync(UsageQuery? query = null, CancellationToken cancellationToken = default)` | The cloud usage of a week by default, in totals and a bucket per day. |
+
 ### interface IChatClient
 
 The chat surface is the MEAI contract itself, so the client composes with MEAI pipelines (function invocation, telemetry, caching) directly.
@@ -86,6 +95,16 @@ Classification, yes/no and scoring by a System One model, local or in Ollama's c
 | `Task<SystemOneResponse> AnswerAsync(SystemOneRequest request, CancellationToken cancellationToken = default)` | Scores every question against the request's state in one call. |
 
 ## Snail.Toolkit.AI.Ollama.Clients
+
+### class AccountClient
+
+The ollama.com account's cloud usage and credits over /api/usage and /api/balance.
+
+| Member | Summary |
+| --- | --- |
+| `AccountClient(HttpClient httpClient, IOptions<OllamaOptions> options)` | The ollama.com account's cloud usage and credits over /api/usage and /api/balance. |
+| `Task<Balance> GetBalanceAsync(CancellationToken cancellationToken = default)` | The included and purchased credits left. |
+| `Task<UsageReport> GetUsageAsync(UsageQuery? query = null, CancellationToken cancellationToken = default)` | The cloud usage of a week by default, in totals and a bucket per day. |
 
 ### class ChatClient
 
@@ -259,7 +278,57 @@ Named questions a System One model scores against one state over /v1/systemone.
 | `string Model { get; init; }` | A model trained for System One: a local one such as "nimble", or "clef:cloud" for Ollama's cloud. |
 | `string? KeepAlive { get; init; }` | How long the model stays loaded after the request, e.g. "5m"; null leaves Ollama's default. |
 
+### class UsageQuery
+
+Which stretch of cloud usage /api/usage reports, for whom and how it is broken down.
+
+| Member | Summary |
+| --- | --- |
+| `UsageQuery()` |  |
+| `UsageRange Range { get; init; }` | The completed hours or days to include, plus the current partial one; a week by default. |
+| `UsageScope Scope { get; init; }` | Your own requests, or your team's — which needs a team admin; your own by default. |
+| `bool IsGroupedByModel { get; init; }` | Whether totals and buckets are broken down by model, the ten heaviest each. |
+
+### enum UsageRange
+
+The stretch of time a usage report covers; a day is broken into hours, a week and a month into days.
+
+| Member | Summary |
+| --- | --- |
+| `const UsageRange Day` | The last 24 hours, hour by hour ("24h"). |
+| `const UsageRange Month` | The last 30 days, day by day ("30d"). |
+| `const UsageRange Week` | The last 7 days, day by day ("7d"). |
+
+### enum UsageScope
+
+Whose requests a usage report counts.
+
+| Member | Summary |
+| --- | --- |
+| `const UsageScope Self` | Your own requests. |
+| `const UsageScope Team` | Your team's requests; needs a team admin, otherwise Ollama answers 403. |
+
 ## Snail.Toolkit.AI.Ollama.Contracts.Responses
+
+### class Balance
+
+The usage credits left on the account, as /api/balance reports them.
+
+| Member | Summary |
+| --- | --- |
+| `Balance(IncludedCredits Included, PurchasedCredits Purchased)` | The usage credits left on the account, as /api/balance reports them. |
+| `IncludedCredits Included { get; init; }` | What the plan includes. |
+| `PurchasedCredits Purchased { get; init; }` | What was bought on top. |
+
+### class CreditPeriod
+
+The stretch of time included credits are granted for.
+
+| Member | Summary |
+| --- | --- |
+| `CreditPeriod(DateTimeOffset From, DateTimeOffset Until)` | The stretch of time included credits are granted for. |
+| `DateTimeOffset From { get; init; }` | The start in UTC, inclusive. |
+| `DateTimeOffset Until { get; init; }` | The end in UTC, exclusive. |
 
 ### class EmbeddingsResponse
 
@@ -271,6 +340,19 @@ The /api/embed payload: one vector per input string, in input order.
 | `float[][] Embeddings { get; init; }` |  |
 | `int? PromptEvalCount { get; init; }` |  |
 | `string Model { get; init; }` |  |
+
+### class IncludedCredits
+
+The credits a plan includes: in USD for a current plan, as session and weekly limits for a legacy one.
+
+| Member | Summary |
+| --- | --- |
+| `CreditPeriod? Period { get; init; }` | The period the allowance covers; null on a legacy plan. |
+| `IncludedCredits()` |  |
+| `PlanLimit? Session { get; init; }` | The limit of the current session on a legacy plan; null on a current one. |
+| `PlanLimit? Weekly { get; init; }` | The weekly limit on a legacy plan; null on a current one. |
+| `double? AllowanceUsd { get; init; }` | The included credits for the whole period in USD; null on a legacy plan. |
+| `double? BalanceUsd { get; init; }` | The included credits left in USD; null on a legacy plan. |
 
 ### class ModelDescription
 
@@ -294,6 +376,25 @@ Everything /api/show knows about one model: what it can do, how it is built and 
 | `string? Template { get; init; }` | The prompt template. |
 | `string? TemplateSource { get; init; }` | Where the chat prompt actually comes from: "renderer_parser", "renderer", "parser", "harmony", "go_template", "gguf_chat_template" or "none"; null before Ollama 0.40.8. |
 
+### class PlanLimit
+
+A limit of a legacy plan: how much of it is left and when it resets.
+
+| Member | Summary |
+| --- | --- |
+| `DateTimeOffset ResetsAt { get; init; }` | When the limit resets, in UTC. |
+| `PlanLimit(double RemainingPercent, DateTimeOffset ResetsAt)` | A limit of a legacy plan: how much of it is left and when it resets. |
+| `double RemainingPercent { get; init; }` | The share of the limit left, from 0 to 100. |
+
+### class PurchasedCredits
+
+The purchased credits that have not expired.
+
+| Member | Summary |
+| --- | --- |
+| `PurchasedCredits(double BalanceUsd)` | The purchased credits that have not expired. |
+| `double BalanceUsd { get; init; }` | What is left of them in USD. |
+
 ### class SystemOneResponse
 
 The /v1/systemone payload: one answer per question, under the name it was asked with.
@@ -314,6 +415,65 @@ The think values a model accepts and the one it uses when none is sent.
 | `IReadOnlyList<JsonElement> Values { get; init; }` | Booleans and effort names, e.g. [false, true] or ["low", "medium", "high"]. |
 | `JsonElement? Default { get; init; }` | The value used when a request sends no think. |
 | `ThinkingLevels(IReadOnlyList<JsonElement> Values, JsonElement? Default)` | The think values a model accepts and the one it uses when none is sent. |
+
+### class UsageBucket
+
+The usage of one hour or one day.
+
+| Member | Summary |
+| --- | --- |
+| `DateTimeOffset From { get; init; }` | The start of the bucket in UTC, inclusive. |
+| `DateTimeOffset Until { get; init; }` | The end of the bucket in UTC, exclusive. |
+| `UsageBucket()` |  |
+| `bool IsPartial { get; init; }` | Whether the bucket is the current hour or day, still in progress. |
+
+### class UsageGroup
+
+The usage of one model.
+
+| Member | Summary |
+| --- | --- |
+| `UsageGroup()` |  |
+| `string Model { get; init; }` | The model's name. |
+
+### class UsageMetrics
+
+What a set of cloud requests cost and consumed.
+
+| Member | Summary |
+| --- | --- |
+| `UsageMetrics()` |  |
+| `double? UsageUsd { get; init; }` | The value of the requests in USD, what the plan covers and what purchased credits paid alike; null for a range that holds legacy requests. |
+| `int RequestCount { get; init; }` | How many requests were recorded. |
+| `long? CachedInputTokens { get; init; }` | The input tokens read from cache, already counted in `InputTokens`. |
+| `long? InputTokens { get; init; }` | The input tokens, cached ones included. |
+| `long? OutputTokens { get; init; }` | The output tokens. |
+
+### class UsageReport
+
+Cloud usage over a stretch of time, as /api/usage reports it: totals and a bucket per hour or day.
+
+| Member | Summary |
+| --- | --- |
+| `DateTimeOffset From { get; init; }` | The start of the stretch in UTC, inclusive. |
+| `DateTimeOffset Until { get; init; }` | The end of the stretch in UTC, exclusive. |
+| `IReadOnlyList<UsageBucket> Buckets { get; init; }` | The usage hour by hour or day by day, in order, empty buckets included. |
+| `UsageReport()` |  |
+| `UsageSummary Totals { get; init; }` | The usage across the whole stretch, the groups beyond the ten heaviest included. |
+| `string Granularity { get; init; }` | The size of a bucket: "hour" for a day, "day" for a week or a month. |
+| `string Range { get; init; }` | The stretch reported: "24h", "7d" or "30d". |
+| `string Scope { get; init; }` | Whose requests are counted: "self" or "team". |
+| `string? GroupBy { get; init; }` | "model" when the report is broken down by model; null otherwise. |
+
+### class UsageSummary
+
+Usage in total and, when the report is broken down by model, model by model.
+
+| Member | Summary |
+| --- | --- |
+| `IReadOnlyList<UsageGroup>? Groups { get; init; }` | Up to ten models, the heaviest across the whole stretch, in the same order in every bucket; a bucket leaves out those it holds no request of. Null when the report is not broken down by model. |
+| `UsageMetrics? Remainder { get; init; }` | The models beyond the ten, together; null when there are none. |
+| `UsageSummary()` |  |
 
 ## Snail.Toolkit.AI.Ollama.Contracts.Schema
 

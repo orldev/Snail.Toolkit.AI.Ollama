@@ -21,6 +21,8 @@ namespace Snail.Toolkit.AI.Ollama.Clients.Extensions;
 [JsonSerializable(typeof(SystemOneRequest))]
 [JsonSerializable(typeof(SystemOneResponse))]
 [JsonSerializable(typeof(SpeechRequest))]
+[JsonSerializable(typeof(UsageReport))]
+[JsonSerializable(typeof(Balance))]
 [JsonSerializable(typeof(ModelDescription))]
 [JsonSerializable(typeof(ModelsClient.VersionReply))]
 [JsonSerializable(typeof(ModelsClient.LocalModels))]

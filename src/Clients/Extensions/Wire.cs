@@ -80,6 +80,12 @@ internal static class Wire
     /// <summary>The /v1/audio/speech request.</summary>
     public static readonly JsonTypeInfo<SpeechRequest> SpeechRequest = Info<SpeechRequest>();
 
+    /// <summary>The /api/usage answer.</summary>
+    public static readonly JsonTypeInfo<UsageReport> UsageReport = Info<UsageReport>();
+
+    /// <summary>The /api/balance answer.</summary>
+    public static readonly JsonTypeInfo<Balance> Balance = Info<Balance>();
+
     /// <summary>The /api/show answer.</summary>
     public static readonly JsonTypeInfo<ModelDescription> ModelDescription = Info<ModelDescription>();
 

@@ -23,7 +23,7 @@ services.AddOllama(options =>
 services.AddOllama(builder.Configuration.GetSection("Ollama"));
 ```
 
-This registers `IOllamaClient` (the facade) plus the individual `IChatClient`, `IGenerateClient`, `IEmbeddingsClient`, `ISystemOneClient` and `IModelsClient`.
+This registers `IOllamaClient` (the facade) plus the individual `IChatClient`, `IGenerateClient`, `IEmbeddingsClient`, `ISystemOneClient`, `IModelsClient` and `IAccountClient`; `AddOllamaSpeech()` adds an `ITextToSpeechClient` ([Speech](#speech)). The account and speech clients are injected on their own: the facade keeps the shape it was released with.
 
 ## Chat: the MEAI surface
 
@@ -259,6 +259,22 @@ The window is read from the key named after `general.architecture` first, then f
 `model_info` keys, and a projector's window can sort ahead of the model's own. Capabilities are advisory and read
 leniently — an entry that is not a name is skipped, and a value that is not a list reads as `null` — so one odd entry
 never costs you the window, the template and the think values of the same answer, nor `ListAsync` the other models.
+
+## Cloud usage and credits
+
+`IAccountClient` reports what your ollama.com account spent on cloud models, web search and web fetch, and the credits it has left. Point `BaseUrl` at `https://ollama.com` with an `ApiKey`, or ask a local Ollama 0.40.1+ signed in to ollama.com, which passes the calls on:
+
+```csharp
+var account = provider.GetRequiredService<IAccountClient>();
+
+var report = await account.GetUsageAsync(new UsageQuery { Range = UsageRange.Day, IsGroupedByModel = true });
+Console.WriteLine($"{report.Totals.RequestCount} requests, ${report.Totals.UsageUsd}");   // a bucket per hour
+
+var balance = await account.GetBalanceAsync();
+Console.WriteLine($"${balance.Included.BalanceUsd} of ${balance.Included.AllowanceUsd} left, ${balance.Purchased.BalanceUsd} purchased");
+```
+
+A week of your own requests, day by day, is the default; `UsageScope.Team` needs a team admin. A legacy plan reports its included credits as `Session` and `Weekly` limits instead of dollars. Without a sign-in or with an invalid key the calls fail with `HttpBuilderException` 401; both are retried on transient failures and on 429, honouring `Retry-After`.
 
 ## Buffering for UIs
 

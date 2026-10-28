@@ -89,6 +89,10 @@ public static class ServiceCollectionExtensions
                 .ConfigurePrimaryHttpMessageHandler(CreateStreamingSafeHandler)
                 .AddRetriesForIdempotentCalls();
 
+            services.AddHttpClient<IAccountClient, AccountClient>(ConfigureTransport)
+                .ConfigurePrimaryHttpMessageHandler(CreateStreamingSafeHandler)
+                .AddRetriesForIdempotentCalls();
+
             services.AddTransient<IOllamaClient, OllamaClient>();
 
             return services;
@@ -129,7 +133,7 @@ public static class ServiceCollectionExtensions
     };
 
     /// <summary>
-    /// Embeddings, System One scoring and model queries are the only idempotent calls — chat and
+    /// Embeddings, System One scoring, model queries and account reports are the only idempotent calls — chat and
     /// generation stream, and a retry would replay a half-consumed generation.
     /// </summary>
     /// <remarks>
