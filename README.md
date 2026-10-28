@@ -231,7 +231,7 @@ if (model?.Supports("decision") is true)
 }
 ```
 
-`ShowAsync` also reports the context window (`ContextLength`), the think values a model accepts (`Thinking`) and its template.
+`ShowAsync` also reports the context window (`ContextLength`), the think values a model accepts (`Thinking`) and its template. Since Ollama 0.40.8 it says where the chat prompt actually comes from (`TemplateSource`: `renderer_parser`, `go_template`, `gguf_chat_template`…) and names the `Renderer` and `Parser` a model runs — with a renderer, the packaged template is inert.
 
 The window is read from the key named after `general.architecture` first, then from any `*.context_length`: Ollama sorts
 `model_info` keys, and a projector's window can sort ahead of the model's own. Capabilities are advisory and read

@@ -46,6 +46,20 @@ public class ModelsLiveTests
         Assert.True(description.ContextLength > 0);
     }
 
+    /// <summary>
+    /// From Ollama 0.40.8 every model reports where its chat prompt comes from; an older server reports nothing.
+    /// </summary>
+    [OllamaFact]
+    public async Task ShowAsync_ConfiguredModel_ReportsWhereItsPromptComesFrom()
+    {
+        var client = CreateClient();
+        var version = Version.Parse((await client.GetVersionAsync()).Split('-')[0]);
+
+        var description = await client.ShowAsync(Model);
+
+        Assert.Equal(version >= new Version(0, 40, 8), description!.TemplateSource is { Length: > 0 });
+    }
+
     [OllamaFact]
     public async Task ShowAsync_UnknownModel_ReturnsNull()
     {

@@ -1,1 +1,7 @@
 #nullable enable
+Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Parser.get -> string?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Parser.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Renderer.get -> string?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Renderer.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.TemplateSource.get -> string?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.TemplateSource.init -> void

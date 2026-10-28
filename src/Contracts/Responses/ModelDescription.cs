@@ -26,6 +26,31 @@ public sealed record ModelDescription(
     [property: JsonPropertyName("thinking")] ThinkingLevels? Thinking = null)
 {
     /// <summary>
+    /// The chat renderer the model runs, aliases resolved, e.g. "qwen3.5"; null when it has none or the server is
+    /// older than Ollama 0.40.8.
+    /// </summary>
+    [JsonPropertyName("renderer")]
+    public string? Renderer { get; init; }
+
+    /// <summary>
+    /// The parser that reads the model's output, e.g. "qwen3.5"; null when it has none or the server is older than
+    /// Ollama 0.40.8.
+    /// </summary>
+    [JsonPropertyName("parser")]
+    public string? Parser { get; init; }
+
+    /// <summary>
+    /// Where the chat prompt actually comes from: "renderer_parser", "renderer", "parser", "harmony",
+    /// "go_template", "gguf_chat_template" or "none"; null before Ollama 0.40.8.
+    /// </summary>
+    /// <remarks>
+    /// With a Go renderer the packaged <see cref="Template"/> is inert, so the template alone no longer says how the
+    /// model is prompted. Read as a string: Ollama adds sources as it adds runners.
+    /// </remarks>
+    [JsonPropertyName("template_source")]
+    public string? TemplateSource { get; init; }
+
+    /// <summary>
     /// Whether the model declares the capability, e.g. Supports("tools") before offering it tools.
     /// </summary>
     /// <remarks>

@@ -186,6 +186,40 @@ public class ModelsClientTests
     }
 
     /// <summary>
+    /// Ollama 0.40.8 reports where a model's chat prompt actually comes from; with a Go renderer the packaged template
+    /// is inert, so the template alone no longer says how the model is prompted.
+    /// </summary>
+    [Fact]
+    public async Task ShowAsync_Ollama040_ReadsRendererParserAndTemplateSource()
+    {
+        var client = CreateClient("/api/show", """
+            {"capabilities":["completion","vision","tools","thinking"],"renderer":"qwen3.5","parser":"qwen3.5",
+             "template":"{{ .Prompt }}","template_source":"renderer_parser"}
+            """);
+
+        var description = await client.ShowAsync("qwen");
+
+        Assert.Equal("qwen3.5", description!.Renderer);
+        Assert.Equal("qwen3.5", description.Parser);
+        Assert.Equal("renderer_parser", description.TemplateSource);
+    }
+
+    /// <summary>
+    /// A server before 0.40.8, or a model that renders with its Go template, sends none of the three.
+    /// </summary>
+    [Fact]
+    public async Task ShowAsync_BeforeOllama040_LeavesRendererParserAndTemplateSourceUnknown()
+    {
+        var client = CreateClient("/api/show", """{"capabilities":["completion"],"template":"{{ .Prompt }}"}""");
+
+        var description = await client.ShowAsync("gemma3");
+
+        Assert.Null(description!.Renderer);
+        Assert.Null(description.Parser);
+        Assert.Null(description.TemplateSource);
+    }
+
+    /// <summary>
     /// A model the server does not have is an ordinary answer to "what is this model", not a failure.
     /// </summary>
     [Fact]

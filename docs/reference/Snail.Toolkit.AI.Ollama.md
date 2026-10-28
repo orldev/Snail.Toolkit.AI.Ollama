@@ -275,7 +275,10 @@ Everything /api/show knows about one model: what it can do, how it is built and 
 | `int? ContextLength { get; }` | The trained context window in tokens, read from the architecture metadata; null when not reported. |
 | `string? License { get; init; }` | The license text shipped with the weights. |
 | `string? Parameters { get; init; }` | The Modelfile parameters, one "name value" per line. |
+| `string? Parser { get; init; }` | The parser that reads the model's output, e.g. "qwen3.5"; null when it has none or the server is older than Ollama 0.40.8. |
+| `string? Renderer { get; init; }` | The chat renderer the model runs, aliases resolved, e.g. "qwen3.5"; null when it has none or the server is older than Ollama 0.40.8. |
 | `string? Template { get; init; }` | The prompt template. |
+| `string? TemplateSource { get; init; }` | Where the chat prompt actually comes from: "renderer_parser", "renderer", "parser", "harmony", "go_template", "gguf_chat_template" or "none"; null before Ollama 0.40.8. |
 
 ### class SystemOneResponse
 
