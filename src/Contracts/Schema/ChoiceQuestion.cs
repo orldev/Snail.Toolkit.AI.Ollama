@@ -7,7 +7,8 @@ namespace Snail.Toolkit.AI.Ollama.Contracts.Schema;
 /// </summary>
 /// <param name="Instructions">What to judge: a string, or any object or array, sent as JSON.</param>
 /// <param name="Criteria">
-/// Two to 26 options keyed by the name the answer returns; a null description lets the key speak for itself.
+/// Two or more options keyed by the name the answer returns — up to 255, fewer for some models; a null description
+/// lets the key speak for itself.
 /// </param>
 /// <remarks>A tie goes to the option listed first, so order the likelier default first.</remarks>
 public sealed record ChoiceQuestion(

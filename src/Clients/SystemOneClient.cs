@@ -9,7 +9,7 @@ using Snail.Toolkit.HttpBuilder.Extensions;
 namespace Snail.Toolkit.AI.Ollama.Clients;
 
 /// <summary>
-/// Choice, yes/no and score questions answered by a local System One model over /v1/systemone.
+/// Choice, yes/no and score questions answered by a System One model, local or in Ollama's cloud, over /v1/systemone.
 /// </summary>
 public sealed class SystemOneClient(HttpClient httpClient, IOptions<OllamaOptions> options)
     : TypedHttpClientBase(httpClient), ISystemOneClient
@@ -21,8 +21,9 @@ public sealed class SystemOneClient(HttpClient httpClient, IOptions<OllamaOption
     /// <inheritdoc />
     /// <exception cref="HttpBuilderException">
     /// Thrown on a non-success status: 400 for an invalid request, an unsupported model or a prompt that
-    /// overflows the context, 404 for a missing model, 413 for a body over 64 KiB (32 MiB with images),
-    /// 500 when loading or scoring fails.
+    /// overflows the context or a cloud model's token limit; 401 for a cloud model without a sign-in or with an
+    /// invalid API key; 402 for a cloud model the plan does not include; 404 for a missing model; 413 for local
+    /// text over 64 KiB, a request over 32 MiB or a cloud request over 13 MiB; 500 when loading or scoring fails.
     /// </exception>
     /// <exception cref="TimeoutException">Thrown when OllamaOptions.Timeout expires first.</exception>
     public async Task<SystemOneResponse> AnswerAsync(

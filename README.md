@@ -200,7 +200,9 @@ if (response.Answers["label"] is ChoiceAnswer label)
 
 Each answer comes back as the kind it was asked as: `ChoiceAnswer` (the pick, every option's probability and a confidence), `NoulAnswer` (the probability of yes, so you choose the threshold) or `ScoreAnswer` (a probability-weighted index from 0 to N − 1 — not normalized to 0–1).
 
-Vision decision models — [Clef](https://ollama.com/library/clef) and [Clef Flash](https://ollama.com/library/clef-flash), Ollama 0.35.1+ — also judge images, shared by every question and scored jointly with the state. Send raw base64; URLs and data URIs are rejected:
+A choice takes two or more options, up to 255 (fewer for some models); a score takes two to ten levels. Without `NoulCriteria` a yes/no question uses the model's own wording for the two outcomes.
+
+Decision models with vision — [Clef](https://ollama.com/library/clef), [Clef Flash](https://ollama.com/library/clef-flash), [d1](https://ollama.com/library/d1) and others, Ollama 0.35.1+ — also judge images, shared by every question and scored jointly with the state; a model with audio input, such as [d1-omni](https://ollama.com/library/d1-omni), takes WAV clips in the same `Images` list. Send raw base64; URLs and data URIs are rejected:
 
 ```csharp
 var request = new SystemOneRequest("clef-flash", "The user took this screenshot.", questions)
@@ -209,7 +211,9 @@ var request = new SystemOneRequest("clef-flash", "The user took this screenshot.
 };
 ```
 
-Requires Ollama 0.35.0+ and a local GGUF model trained for System One. The call never streams, is bounded by `Timeout` and is retried on transient failures. Oversized input is never truncated: a request over 64 KiB (32 MiB with images) or a prompt that overflows the context window fails with `HttpBuilderException`.
+Decision models also run in Ollama's cloud since 0.40.5: ask for `clef:cloud` or `clef-flash:cloud` through a local server signed in to ollama.com, or point `BaseUrl` at `https://ollama.com` with an `ApiKey`. Cloud models need a paid plan or usage credits — without them Ollama answers 401 (not signed in) or 402 (not in the plan) — and take up to 4 images, 13 MiB per request and a 65,536-token window.
+
+Requires Ollama 0.35.0+ and a model trained for System One; locally it runs on GGUF or, on Apple silicon since 0.40.0, on MLX. The call never streams, is bounded by `Timeout` and is retried on transient failures. Oversized input is never truncated: local text over 64 KiB, a request over 32 MiB or a prompt that overflows the context window fails with `HttpBuilderException`.
 
 ## Models
 

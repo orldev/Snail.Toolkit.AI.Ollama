@@ -4,7 +4,8 @@ using Snail.Toolkit.AI.Ollama.Contracts.Responses;
 namespace Snail.Toolkit.AI.Ollama.Abstractions;
 
 /// <summary>
-/// Classification, yes/no and scoring by a local System One model: probabilities instead of generated text.
+/// Classification, yes/no and scoring by a System One model, local or in Ollama's cloud: probabilities instead of
+/// generated text.
 /// </summary>
 public interface ISystemOneClient
 {

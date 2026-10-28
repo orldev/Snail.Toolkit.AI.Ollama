@@ -66,7 +66,7 @@ Unified entry point: chat, embeddings, single-shot generation, System One scorin
 | `IEmbeddingsClient Embeddings { get; }` | Text vectorization for semantic search and retrieval scenarios. |
 | `IGenerateClient Generate { get; }` | One-off prompt completion without conversation history. |
 | `IModelsClient Models { get; }` | The server's version and its models: on disk, in memory, and what each can do. |
-| `ISystemOneClient SystemOne { get; }` | Choice, yes/no and score questions answered as probabilities by a local System One model. |
+| `ISystemOneClient SystemOne { get; }` | Choice, yes/no and score questions answered as probabilities by a System One model, local or in Ollama's cloud. |
 
 ### interface IStreamingAiClient<TRequest>
 
@@ -78,7 +78,7 @@ A client whose response arrives as a real-time stream of chunks.
 
 ### interface ISystemOneClient
 
-Classification, yes/no and scoring by a local System One model: probabilities instead of generated text.
+Classification, yes/no and scoring by a System One model, local or in Ollama's cloud: probabilities instead of generated text.
 
 | Member | Summary |
 | --- | --- |
@@ -141,16 +141,16 @@ Facade uniting the specialized clients behind one injectable entry point.
 | `IEmbeddingsClient Embeddings { get; }` | Text vectorization for semantic search and retrieval scenarios. |
 | `IGenerateClient Generate { get; }` | One-off prompt completion without conversation history. |
 | `IModelsClient Models { get; }` | The server's version and its models: on disk, in memory, and what each can do. |
-| `ISystemOneClient SystemOne { get; }` | Choice, yes/no and score questions answered as probabilities by a local System One model. |
+| `ISystemOneClient SystemOne { get; }` | Choice, yes/no and score questions answered as probabilities by a System One model, local or in Ollama's cloud. |
 | `OllamaClient(IChatClient chatClient, IEmbeddingsClient embeddingsClient, IGenerateClient generateClient, ISystemOneClient systemOneClient, IModelsClient modelsClient)` | Facade uniting the specialized clients behind one injectable entry point. |
 
 ### class SystemOneClient
 
-Choice, yes/no and score questions answered by a local System One model over /v1/systemone.
+Choice, yes/no and score questions answered by a System One model, local or in Ollama's cloud, over /v1/systemone.
 
 | Member | Summary |
 | --- | --- |
-| `SystemOneClient(HttpClient httpClient, IOptions<OllamaOptions> options)` | Choice, yes/no and score questions answered by a local System One model over /v1/systemone. |
+| `SystemOneClient(HttpClient httpClient, IOptions<OllamaOptions> options)` | Choice, yes/no and score questions answered by a System One model, local or in Ollama's cloud, over /v1/systemone. |
 | `Task<SystemOneResponse> AnswerAsync(SystemOneRequest request, CancellationToken cancellationToken = default)` | Scores every question against the request's state in one call. |
 
 ## Snail.Toolkit.AI.Ollama.Clients.Extensions
@@ -239,11 +239,11 @@ Named questions a System One model scores against one state over /v1/systemone.
 
 | Member | Summary |
 | --- | --- |
-| `IReadOnlyDictionary<string, SystemOneQuestion> Questions { get; init; }` | One to 64 questions, each scored on its own and answered under the same name. |
-| `IReadOnlyList<string>? Images { get; init; }` | Base64-encoded PNG, JPEG or WebP images every question sees alongside the state, in this order. |
+| `IReadOnlyDictionary<string, SystemOneQuestion> Questions { get; init; }` | One to 64 questions, each scored on its own and answered under the same name; cloud models take names of up to 100 ASCII letters, digits, "_", "." or "-". |
+| `IReadOnlyList<string>? Images { get; init; }` | Base64-encoded PNG, JPEG or WebP images every question sees alongside the state, in this order; a model with audio input, such as d1-omni, also takes WAV clips here. |
 | `SystemOneRequest(string Model, object State, IReadOnlyDictionary<string, SystemOneQuestion> Questions)` | Named questions a System One model scores against one state over /v1/systemone. |
 | `object State { get; init; }` | The context being judged: a string, or any object or array, sent as JSON. |
-| `string Model { get; init; }` | A local model trained for System One, such as "nimble". |
+| `string Model { get; init; }` | A model trained for System One: a local one such as "nimble", or "clef:cloud" for Ollama's cloud. |
 | `string? KeepAlive { get; init; }` | How long the model stays loaded after the request, e.g. "5m"; null leaves Ollama's default. |
 
 ## Snail.Toolkit.AI.Ollama.Contracts.Responses
@@ -333,7 +333,7 @@ Picks the one option that fits the state best.
 | Member | Summary |
 | --- | --- |
 | `ChoiceQuestion(object Instructions, IReadOnlyDictionary<string, string?> Criteria)` | Picks the one option that fits the state best. |
-| `IReadOnlyDictionary<string, string?> Criteria { get; init; }` | Two to 26 options keyed by the name the answer returns; a null description lets the key speak for itself. |
+| `IReadOnlyDictionary<string, string?> Criteria { get; init; }` | Two or more options keyed by the name the answer returns — up to 255, fewer for some models; a null description lets the key speak for itself. |
 
 ### class FunctionCall
 
@@ -423,8 +423,8 @@ The wording of the two candidates a yes/no question is scored between.
 | Member | Summary |
 | --- | --- |
 | `NoulCriteria(string? No = null, string? Yes = null)` | The wording of the two candidates a yes/no question is scored between. |
-| `string? No { get; init; }` | Describes the false candidate; null keeps "No". |
-| `string? Yes { get; init; }` | Describes the true candidate; null keeps "Yes". |
+| `string? No { get; init; }` | Describes the false candidate; null keeps the model's default. |
+| `string? Yes { get; init; }` | Describes the true candidate; null keeps the model's default. |
 
 ### class NoulQuestion
 
@@ -432,7 +432,7 @@ Asks how likely a yes/no statement about the state is to be true.
 
 | Member | Summary |
 | --- | --- |
-| `NoulCriteria? Criteria { get; init; }` | Rewords the two candidates; null keeps Ollama's "No" and "Yes". |
+| `NoulCriteria? Criteria { get; init; }` | Rewords the two candidates; null keeps the model's own defaults. |
 | `NoulQuestion(object Instructions, NoulCriteria? Criteria = null)` | Asks how likely a yes/no statement about the state is to be true. |
 
 ### class RunningModel
@@ -461,7 +461,7 @@ Where the state lands on the question's scale.
 | `IReadOnlyDictionary<int, string> Legend { get; init; }` | The criterion description behind every index. |
 | `ScoreAnswer(double Score, IReadOnlyDictionary<int, string> Legend, IReadOnlyDictionary<int, double> Probabilities, double Confidence)` | Where the state lands on the question's scale. |
 | `double Confidence { get; init; }` | How concentrated the distribution is: 0 when uniform, near 1 when one index dominates. |
-| `double Score { get; init; }` | The probability-weighted mean of the criterion indices, from 0 to N − 1. |
+| `double Score { get; init; }` | The probability-weighted mean of the criterion indices, from 0 to N − 1 — at most 9. |
 
 ### class ScoreQuestion
 
@@ -469,7 +469,7 @@ Places the state on an ordered scale.
 
 | Member | Summary |
 | --- | --- |
-| `IReadOnlyList<string> Criteria { get; init; }` | Two to 26 descriptions from lowest to highest; the answer indexes into them. |
+| `IReadOnlyList<string> Criteria { get; init; }` | Two to 10 descriptions from lowest to highest; the answer indexes into them. |
 | `ScoreQuestion(object Instructions, IReadOnlyList<string> Criteria)` | Places the state on an ordered scale. |
 
 ### class StreamChunk

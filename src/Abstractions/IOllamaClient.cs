@@ -22,7 +22,7 @@ public interface IOllamaClient
     IGenerateClient Generate { get; }
 
     /// <summary>
-    /// Choice, yes/no and score questions answered as probabilities by a local System One model.
+    /// Choice, yes/no and score questions answered as probabilities by a System One model, local or in Ollama's cloud.
     /// </summary>
     ISystemOneClient SystemOne { get; }
 
