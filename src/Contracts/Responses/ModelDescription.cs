@@ -51,6 +51,13 @@ public sealed record ModelDescription(
     public string? TemplateSource { get; init; }
 
     /// <summary>
+    /// The voices a speech model speaks with, e.g. "Zoey" or "default"; null for a model that does not speak.
+    /// </summary>
+    /// <remarks>Pass one as TextToSpeechOptions.VoiceId; an unknown voice makes Ollama answer 400 with this list.</remarks>
+    [JsonPropertyName("voices")]
+    public IReadOnlyList<string>? Voices { get; init; }
+
+    /// <summary>
     /// Whether the model declares the capability, e.g. Supports("tools") before offering it tools.
     /// </summary>
     /// <remarks>

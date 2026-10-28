@@ -21,6 +21,28 @@ internal static class UnaryTimeout
         options.WithinTimeoutAsync(token => request.SendAsync(answer, token), cancellationToken);
 
     /// <summary>
+    /// Sends the request and reads its whole body as bytes, with the media type it came with, within the configured
+    /// timeout.
+    /// </summary>
+    /// <exception cref="TimeoutException">The configured timeout expired before the whole body arrived.</exception>
+    public static Task<(byte[] Body, string? MediaType)> ReadWithinAsync(
+        this IHttpRequestBuilder request,
+        OllamaOptions options,
+        CancellationToken cancellationToken) =>
+        options.WithinTimeoutAsync(token => ReadAsync(request, token), cancellationToken);
+
+    private static async Task<(byte[] Body, string? MediaType)> ReadAsync(IHttpRequestBuilder request, CancellationToken cancellationToken)
+    {
+        using var response = await request
+            .SendCheckedAsync(HttpCompletionOption.ResponseContentRead, cancellationToken)
+            .ConfigureAwait(false);
+
+        byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+
+        return (body, response.Content.Headers.ContentType?.MediaType);
+    }
+
+    /// <summary>
     /// Runs the call under a token that fires at the configured timeout or with the caller's token.
     /// </summary>
     /// <exception cref="TimeoutException">The configured timeout expired before Ollama answered.</exception>

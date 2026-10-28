@@ -5,3 +5,13 @@ Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Renderer.get -> str
 Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Renderer.init -> void
 Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.TemplateSource.get -> string?
 Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.TemplateSource.init -> void
+[MEAI001]Snail.Toolkit.AI.Ollama.Clients.SpeechClient
+[MEAI001]Snail.Toolkit.AI.Ollama.Clients.SpeechClient.Dispose() -> void
+[MEAI001]Snail.Toolkit.AI.Ollama.Clients.SpeechClient.GetAudioAsync(string! text, Microsoft.Extensions.AI.TextToSpeechOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.AI.TextToSpeechResponse!>!
+[MEAI001]Snail.Toolkit.AI.Ollama.Clients.SpeechClient.GetService(System.Type! serviceType, object? serviceKey = null) -> object?
+[MEAI001]Snail.Toolkit.AI.Ollama.Clients.SpeechClient.GetStreamingAudioAsync(string! text, Microsoft.Extensions.AI.TextToSpeechOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Microsoft.Extensions.AI.TextToSpeechResponseUpdate!>!
+[MEAI001]Snail.Toolkit.AI.Ollama.Clients.SpeechClient.SpeechClient(System.Net.Http.HttpClient! httpClient, Microsoft.Extensions.Options.IOptions<Snail.Toolkit.AI.Ollama.Configuration.OllamaOptions!>! options) -> void
+[MEAI001]Snail.Toolkit.AI.Ollama.ServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddOllamaSpeech() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+[MEAI001]static Snail.Toolkit.AI.Ollama.ServiceCollectionExtensions.AddOllamaSpeech(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Voices.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Voices.init -> void

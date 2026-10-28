@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +10,8 @@ using Snail.Toolkit.AI.Ollama.Abstractions;
 using Snail.Toolkit.AI.Ollama.Clients;
 using Snail.Toolkit.AI.Ollama.Clients.Extensions;
 using Snail.Toolkit.AI.Ollama.Configuration;
+
+using ITextToSpeechClient = Microsoft.Extensions.AI.ITextToSpeechClient;
 
 namespace Snail.Toolkit.AI.Ollama;
 
@@ -43,6 +46,24 @@ public static class ServiceCollectionExtensions
             services.Configure<OllamaOptions>(configuration);
 
             return services.AddClients();
+        }
+
+        /// <summary>
+        /// Registers Ollama's text-to-speech as MEAI's <see cref="ITextToSpeechClient"/>, with the settings AddOllama
+        /// configured.
+        /// </summary>
+        /// <remarks>
+        /// A call of its own because MEAI's speech abstractions are experimental (MEAI001): an application opts in to
+        /// them, and AddOllama keeps registering only what is stable. Speech is never retried — a retry would replay
+        /// audio half played.
+        /// </remarks>
+        [Experimental("MEAI001")]
+        public IServiceCollection AddOllamaSpeech()
+        {
+            services.AddHttpClient<ITextToSpeechClient, SpeechClient>(ConfigureTransport)
+                .ConfigurePrimaryHttpMessageHandler(CreateStreamingSafeHandler);
+
+            return services;
         }
 
         private IServiceCollection AddClients()

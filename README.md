@@ -215,6 +215,28 @@ Decision models also run in Ollama's cloud since 0.40.5: ask for `clef:cloud` or
 
 Requires Ollama 0.35.0+ and a model trained for System One; locally it runs on GGUF or, on Apple silicon since 0.40.0, on MLX. The call never streams, is bounded by `Timeout` and is retried on transient failures. Oversized input is never truncated: local text over 64 KiB, a request over 32 MiB or a prompt that overflows the context window fails with `HttpBuilderException`.
 
+## Speech
+
+A speech model such as [Phonon](https://ollama.com/library/phonon) reads text aloud through MEAI's `ITextToSpeechClient`, over Ollama's `/v1/audio/speech` (Ollama 0.40.9+, macOS for now). MEAI marks its speech abstractions experimental (MEAI001), so speech is a registration of its own that the application opts in to:
+
+```csharp
+#pragma warning disable MEAI001
+services.AddOllama(builder.Configuration.GetSection("Ollama")).AddOllamaSpeech();
+
+var speech = provider.GetRequiredService<ITextToSpeechClient>();
+var options = new TextToSpeechOptions { ModelId = "phonon", VoiceId = "Zoey" };
+
+var response = await speech.GetAudioAsync("Hello from Ollama.", options);   // one WAV file
+await File.WriteAllBytesAsync("hello.wav", response.Contents.OfType<DataContent>().Single().Data);
+
+await foreach (var update in speech.GetStreamingAudioAsync("A longer story…", options))
+{
+    Play(update.Contents.OfType<DataContent>().Single().Data);               // plays while the rest is spoken
+}
+```
+
+Audio comes as 16-bit mono 24 kHz WAV, or as raw samples with `AudioFormat = "pcm"`; a streamed WAV header holds the maximum value in its size fields, since the length is not known when it is written. `ShowAsync` lists a model's `Voices`. Text is up to 4,096 characters per call. What the model cannot honour — another format, a speed phonon does not support, an unknown voice — fails with `HttpBuilderException` and Ollama's reason (an unknown voice lists the ones there are); pitch, volume and language, which the endpoint has no field for, throw `NotSupportedException` before anything is sent. A whole-file call is bounded by `Timeout`; a stream runs until the audio ends or your token fires. Speech is never retried.
+
 ## Models
 
 Ask the server what it runs before relying on it:
@@ -299,6 +321,7 @@ OLLAMA_VISION_MODEL=qwen2.5vl dotnet test                                  # vis
 OLLAMA_URL=http://localhost:11434 OLLAMA_SYSTEMONE_MODEL=nimble dotnet test # System One, Ollama 0.35.0+
 OLLAMA_URL=http://localhost:11434 OLLAMA_SYSTEMONE_VISION_MODEL=clef-flash dotnet test # System One images, 0.35.1+
 OLLAMA_URL=http://localhost:11434 OLLAMA_EMBED_MODEL=qwen3-embedding:0.6b dotnet test # dimensions, truncate
+OLLAMA_URL=http://localhost:11434 OLLAMA_SPEECH_MODEL=phonon dotnet test            # speech, Ollama 0.40.9+
 ```
 
 ## License

@@ -77,6 +77,9 @@ internal static class Wire
     /// <summary>The /v1/systemone answer.</summary>
     public static readonly JsonTypeInfo<SystemOneResponse> SystemOneResponse = Info<SystemOneResponse>();
 
+    /// <summary>The /v1/audio/speech request.</summary>
+    public static readonly JsonTypeInfo<SpeechRequest> SpeechRequest = Info<SpeechRequest>();
+
     /// <summary>The /api/show answer.</summary>
     public static readonly JsonTypeInfo<ModelDescription> ModelDescription = Info<ModelDescription>();
 

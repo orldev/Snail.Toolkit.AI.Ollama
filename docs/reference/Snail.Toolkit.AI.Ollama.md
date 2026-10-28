@@ -26,6 +26,7 @@ Registers the Ollama feature: options, typed clients and the facade.
 | --- | --- |
 | `IServiceCollection AddOllama(this IServiceCollection services, Action<OllamaOptions>? configure = null)` | Registers Ollama clients configured in code. |
 | `IServiceCollection AddOllama(this IServiceCollection services, IConfiguration configuration)` | Registers Ollama clients configured from configuration. |
+| `IServiceCollection AddOllamaSpeech(this IServiceCollection services)` | Registers Ollama's text-to-speech as MEAI's `ITextToSpeechClient`, with the settings AddOllama configured. |
 
 ## Snail.Toolkit.AI.Ollama.Abstractions
 
@@ -143,6 +144,18 @@ Facade uniting the specialized clients behind one injectable entry point.
 | `IModelsClient Models { get; }` | The server's version and its models: on disk, in memory, and what each can do. |
 | `ISystemOneClient SystemOne { get; }` | Choice, yes/no and score questions answered as probabilities by a System One model, local or in Ollama's cloud. |
 | `OllamaClient(IChatClient chatClient, IEmbeddingsClient embeddingsClient, IGenerateClient generateClient, ISystemOneClient systemOneClient, IModelsClient modelsClient)` | Facade uniting the specialized clients behind one injectable entry point. |
+
+### class SpeechClient
+
+MEAI text-to-speech over Ollama's /v1/audio/speech: a speech model such as phonon reads text aloud, whole or as a stream that starts playing before the text is spoken.
+
+| Member | Summary |
+| --- | --- |
+| `IAsyncEnumerable<TextToSpeechResponseUpdate> GetStreamingAudioAsync(string text, TextToSpeechOptions? options = null, CancellationToken cancellationToken = default)` | Sends text content to the model and streams back the generated audio speech. |
+| `SpeechClient(HttpClient httpClient, IOptions<OllamaOptions> options)` | MEAI text-to-speech over Ollama's /v1/audio/speech: a speech model such as phonon reads text aloud, whole or as a stream that starts playing before the text is spoken. |
+| `Task<TextToSpeechResponse> GetAudioAsync(string text, TextToSpeechOptions? options = null, CancellationToken cancellationToken = default)` | Sends text content to the model and returns the generated audio speech. |
+| `object? GetService(Type serviceType, object? serviceKey = null)` | Serves `TextToSpeechClientMetadata` for MEAI wrappers, or the client itself. |
+| `void Dispose()` | Releases nothing: the transport belongs to `IHttpClientFactory`. |
 
 ### class SystemOneClient
 
@@ -268,6 +281,7 @@ Everything /api/show knows about one model: what it can do, how it is built and 
 | `DateTimeOffset? ModifiedAt { get; init; }` | When it was last pulled or created. |
 | `IReadOnlyDictionary<string, JsonElement>? ModelInfo { get; init; }` | Architecture metadata keyed like "gemma3.context_length". |
 | `IReadOnlyList<string>? Capabilities { get; init; }` | What it can do — "completion", "tools", "thinking", "vision", "embedding", "decision". |
+| `IReadOnlyList<string>? Voices { get; init; }` | The voices a speech model speaks with, e.g. "Zoey" or "default"; null for a model that does not speak. |
 | `ModelDescription(IReadOnlyList<string>? Capabilities, ModelDetails? Details, DateTimeOffset? ModifiedAt, string? Parameters, string? License, string? Template, IReadOnlyDictionary<string, JsonElement>? ModelInfo, ThinkingLevels? Thinking = null)` | Everything /api/show knows about one model: what it can do, how it is built and how it is prompted. |
 | `ModelDetails? Details { get; init; }` | Format, family, size and quantization. |
 | `ThinkingLevels? Thinking { get; init; }` | The think values the model accepts, for thinking models that declare them. |

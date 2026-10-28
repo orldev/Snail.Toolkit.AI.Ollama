@@ -204,6 +204,19 @@ public class ModelsClientTests
         Assert.Equal("renderer_parser", description.TemplateSource);
     }
 
+    [Fact]
+    public async Task ShowAsync_SpeechModel_ReadsItsVoices()
+    {
+        var client = CreateClient("/api/show", """
+            {"capabilities":["speech"],"voices":["Alfie","default","Zoey"],"template_source":"none"}
+            """);
+
+        var description = await client.ShowAsync("phonon");
+
+        Assert.True(description!.Supports("speech"));
+        Assert.Equal(["Alfie", "default", "Zoey"], description.Voices);
+    }
+
     /// <summary>
     /// A server before 0.40.8, or a model that renders with its Go template, sends none of the three.
     /// </summary>
