@@ -1,4 +1,7 @@
 #nullable enable
+Snail.Toolkit.AI.Ollama.Abstractions.IAccountClient
+Snail.Toolkit.AI.Ollama.Abstractions.IAccountClient.GetBalanceAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance!>!
+Snail.Toolkit.AI.Ollama.Abstractions.IAccountClient.GetUsageAsync(Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery? query = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport!>!
 Snail.Toolkit.AI.Ollama.Abstractions.IChatClient
 Snail.Toolkit.AI.Ollama.Abstractions.IEmbeddingsClient
 Snail.Toolkit.AI.Ollama.Abstractions.IEmbeddingsClient.GenerateAsync(Snail.Toolkit.AI.Ollama.Contracts.Requests.EmbeddingsRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse!>!
@@ -18,6 +21,10 @@ Snail.Toolkit.AI.Ollama.Abstractions.IStreamingAiClient<TRequest>
 Snail.Toolkit.AI.Ollama.Abstractions.IStreamingAiClient<TRequest>.StreamAsync(TRequest request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Snail.Toolkit.AI.Ollama.Contracts.Schema.StreamChunk!>!
 Snail.Toolkit.AI.Ollama.Abstractions.ISystemOneClient
 Snail.Toolkit.AI.Ollama.Abstractions.ISystemOneClient.AnswerAsync(Snail.Toolkit.AI.Ollama.Contracts.Requests.SystemOneRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Snail.Toolkit.AI.Ollama.Contracts.Responses.SystemOneResponse!>!
+Snail.Toolkit.AI.Ollama.Clients.AccountClient
+Snail.Toolkit.AI.Ollama.Clients.AccountClient.AccountClient(System.Net.Http.HttpClient! httpClient, Microsoft.Extensions.Options.IOptions<Snail.Toolkit.AI.Ollama.Configuration.OllamaOptions!>! options) -> void
+Snail.Toolkit.AI.Ollama.Clients.AccountClient.GetBalanceAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance!>!
+Snail.Toolkit.AI.Ollama.Clients.AccountClient.GetUsageAsync(Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery? query = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport!>!
 Snail.Toolkit.AI.Ollama.Clients.ChatClient
 Snail.Toolkit.AI.Ollama.Clients.ChatClient.ChatClient(System.Net.Http.HttpClient! httpClient, Microsoft.Extensions.Options.IOptions<Snail.Toolkit.AI.Ollama.Configuration.OllamaOptions!>! options) -> void
 Snail.Toolkit.AI.Ollama.Clients.ChatClient.Dispose() -> void
@@ -133,6 +140,41 @@ Snail.Toolkit.AI.Ollama.Contracts.Requests.SystemOneRequest.Questions.init -> vo
 Snail.Toolkit.AI.Ollama.Contracts.Requests.SystemOneRequest.State.get -> object!
 Snail.Toolkit.AI.Ollama.Contracts.Requests.SystemOneRequest.State.init -> void
 Snail.Toolkit.AI.Ollama.Contracts.Requests.SystemOneRequest.SystemOneRequest(string! Model, object! State, System.Collections.Generic.IReadOnlyDictionary<string!, Snail.Toolkit.AI.Ollama.Contracts.Schema.SystemOneQuestion!>! Questions) -> void
+Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery
+Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery!
+Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery.Equals(Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery? other) -> bool
+Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery.IsGroupedByModel.get -> bool
+Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery.IsGroupedByModel.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery.Range.get -> Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageRange
+Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery.Range.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery.Scope.get -> Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageScope
+Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery.Scope.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery.UsageQuery() -> void
+Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageRange
+Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageRange.Day = 0 -> Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageRange
+Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageRange.Month = 2 -> Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageRange
+Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageRange.Week = 1 -> Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageRange
+Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageScope
+Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageScope.Self = 0 -> Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageScope
+Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageScope.Team = 1 -> Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageScope
+Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance
+Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance!
+Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance.Balance(Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits! Included, Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits! Purchased) -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance.Deconstruct(out Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits! Included, out Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits! Purchased) -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance.Equals(Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance? other) -> bool
+Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance.Included.get -> Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits!
+Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance.Included.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance.Purchased.get -> Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits!
+Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance.Purchased.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod
+Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod!
+Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod.CreditPeriod(System.DateTimeOffset From, System.DateTimeOffset Until) -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod.Deconstruct(out System.DateTimeOffset From, out System.DateTimeOffset Until) -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod.Equals(Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod? other) -> bool
+Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod.From.get -> System.DateTimeOffset
+Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod.From.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod.Until.get -> System.DateTimeOffset
+Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod.Until.init -> void
 Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse
 Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse.Deconstruct(out string! Model, out float[]![]! Embeddings, out int? PromptEvalCount) -> void
 Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse.Embeddings.get -> float[]![]!
@@ -143,6 +185,20 @@ Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse.Model.get -> stri
 Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse.Model.init -> void
 Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse.PromptEvalCount.get -> int?
 Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse.PromptEvalCount.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits
+Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits!
+Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits.AllowanceUsd.get -> double?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits.AllowanceUsd.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits.BalanceUsd.get -> double?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits.BalanceUsd.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits.Equals(Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits? other) -> bool
+Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits.IncludedCredits() -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits.Period.get -> Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits.Period.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits.Session.get -> Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits.Session.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits.Weekly.get -> Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits.Weekly.init -> void
 Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription
 Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription!
 Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Capabilities.get -> System.Collections.Generic.IReadOnlyList<string!>?
@@ -161,11 +217,35 @@ Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.ModifiedAt.get -> S
 Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.ModifiedAt.init -> void
 Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Parameters.get -> string?
 Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Parameters.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Parser.get -> string?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Parser.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Renderer.get -> string?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Renderer.init -> void
 Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Supports(string! capability) -> bool
 Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Template.get -> string?
 Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Template.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.TemplateSource.get -> string?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.TemplateSource.init -> void
 Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Thinking.get -> Snail.Toolkit.AI.Ollama.Contracts.Responses.ThinkingLevels?
 Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Thinking.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Voices.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Voices.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit
+Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit!
+Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit.Deconstruct(out double RemainingPercent, out System.DateTimeOffset ResetsAt) -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit.Equals(Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit? other) -> bool
+Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit.PlanLimit(double RemainingPercent, System.DateTimeOffset ResetsAt) -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit.RemainingPercent.get -> double
+Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit.RemainingPercent.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit.ResetsAt.get -> System.DateTimeOffset
+Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit.ResetsAt.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits
+Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits!
+Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits.BalanceUsd.get -> double
+Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits.BalanceUsd.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits.Deconstruct(out double BalanceUsd) -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits.Equals(Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits? other) -> bool
+Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits.PurchasedCredits(double BalanceUsd) -> void
 Snail.Toolkit.AI.Ollama.Contracts.Responses.SystemOneResponse
 Snail.Toolkit.AI.Ollama.Contracts.Responses.SystemOneResponse.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Responses.SystemOneResponse!
 Snail.Toolkit.AI.Ollama.Contracts.Responses.SystemOneResponse.Answers.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Snail.Toolkit.AI.Ollama.Contracts.Schema.SystemOneAnswer!>!
@@ -186,6 +266,60 @@ Snail.Toolkit.AI.Ollama.Contracts.Responses.ThinkingLevels.Equals(Snail.Toolkit.
 Snail.Toolkit.AI.Ollama.Contracts.Responses.ThinkingLevels.ThinkingLevels(System.Collections.Generic.IReadOnlyList<System.Text.Json.JsonElement>! Values, System.Text.Json.JsonElement? Default) -> void
 Snail.Toolkit.AI.Ollama.Contracts.Responses.ThinkingLevels.Values.get -> System.Collections.Generic.IReadOnlyList<System.Text.Json.JsonElement>!
 Snail.Toolkit.AI.Ollama.Contracts.Responses.ThinkingLevels.Values.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket.Equals(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket? other) -> bool
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket.From.get -> System.DateTimeOffset
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket.From.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket.IsPartial.get -> bool
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket.IsPartial.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket.Until.get -> System.DateTimeOffset
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket.Until.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket.UsageBucket() -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup.Equals(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup? other) -> bool
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup.Model.get -> string!
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup.Model.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup.UsageGroup() -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.CachedInputTokens.get -> long?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.CachedInputTokens.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.InputTokens.get -> long?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.InputTokens.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.OutputTokens.get -> long?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.OutputTokens.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.RequestCount.get -> int
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.RequestCount.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.UsageMetrics() -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.UsageMetrics(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics! original) -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.UsageUsd.get -> double?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.UsageUsd.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport!
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.Buckets.get -> System.Collections.Generic.IReadOnlyList<Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket!>!
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.Buckets.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.Equals(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport? other) -> bool
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.From.get -> System.DateTimeOffset
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.From.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.Granularity.get -> string!
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.Granularity.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.GroupBy.get -> string?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.GroupBy.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.Range.get -> string!
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.Range.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.Scope.get -> string!
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.Scope.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.Totals.get -> Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary!
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.Totals.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.Until.get -> System.DateTimeOffset
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.Until.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.UsageReport() -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary.Groups.get -> System.Collections.Generic.IReadOnlyList<Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup!>?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary.Groups.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary.Remainder.get -> Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics?
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary.Remainder.init -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary.UsageSummary() -> void
+Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary.UsageSummary(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary! original) -> void
 Snail.Toolkit.AI.Ollama.Contracts.Schema.ChatMessage
 Snail.Toolkit.AI.Ollama.Contracts.Schema.ChatMessage.ChatMessage(Snail.Toolkit.AI.Ollama.Contracts.Schema.ChatMessage! original) -> void
 Snail.Toolkit.AI.Ollama.Contracts.Schema.ChatMessage.ChatMessage(string! Role, string! Content, System.Collections.Generic.IEnumerable<string!>? Images = null, System.Collections.Generic.IEnumerable<Snail.Toolkit.AI.Ollama.Contracts.Schema.ToolCall!>? ToolCalls = null, string? ToolCallId = null, string? ToolName = null, string? Thinking = null) -> void
@@ -446,6 +580,14 @@ Snail.Toolkit.AI.Ollama.ServiceCollectionExtensions
 Snail.Toolkit.AI.Ollama.ServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
 Snail.Toolkit.AI.Ollama.ServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddOllama(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 Snail.Toolkit.AI.Ollama.ServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddOllama(System.Action<Snail.Toolkit.AI.Ollama.Configuration.OllamaOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+[MEAI001]Snail.Toolkit.AI.Ollama.Clients.SpeechClient
+[MEAI001]Snail.Toolkit.AI.Ollama.Clients.SpeechClient.Dispose() -> void
+[MEAI001]Snail.Toolkit.AI.Ollama.Clients.SpeechClient.GetAudioAsync(string! text, Microsoft.Extensions.AI.TextToSpeechOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.AI.TextToSpeechResponse!>!
+[MEAI001]Snail.Toolkit.AI.Ollama.Clients.SpeechClient.GetService(System.Type! serviceType, object? serviceKey = null) -> object?
+[MEAI001]Snail.Toolkit.AI.Ollama.Clients.SpeechClient.GetStreamingAudioAsync(string! text, Microsoft.Extensions.AI.TextToSpeechOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Microsoft.Extensions.AI.TextToSpeechResponseUpdate!>!
+[MEAI001]Snail.Toolkit.AI.Ollama.Clients.SpeechClient.SpeechClient(System.Net.Http.HttpClient! httpClient, Microsoft.Extensions.Options.IOptions<Snail.Toolkit.AI.Ollama.Configuration.OllamaOptions!>! options) -> void
+[MEAI001]Snail.Toolkit.AI.Ollama.ServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddOllamaSpeech() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+[MEAI001]static Snail.Toolkit.AI.Ollama.ServiceCollectionExtensions.AddOllamaSpeech(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 abstract Snail.Toolkit.AI.Ollama.Contracts.Requests.RequestBase.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Requests.RequestBase!
 abstract Snail.Toolkit.AI.Ollama.Contracts.Schema.SystemOneAnswer.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Schema.SystemOneAnswer!
 abstract Snail.Toolkit.AI.Ollama.Contracts.Schema.SystemOneQuestion.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Schema.SystemOneQuestion!
@@ -477,18 +619,56 @@ override Snail.Toolkit.AI.Ollama.Contracts.Requests.RequestBase.ToString() -> st
 override Snail.Toolkit.AI.Ollama.Contracts.Requests.SystemOneRequest.Equals(object? obj) -> bool
 override Snail.Toolkit.AI.Ollama.Contracts.Requests.SystemOneRequest.GetHashCode() -> int
 override Snail.Toolkit.AI.Ollama.Contracts.Requests.SystemOneRequest.ToString() -> string!
+override Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery.Equals(object? obj) -> bool
+override Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery.GetHashCode() -> int
+override Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery.ToString() -> string!
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance.Equals(object? obj) -> bool
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance.GetHashCode() -> int
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance.ToString() -> string!
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod.Equals(object? obj) -> bool
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod.GetHashCode() -> int
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod.ToString() -> string!
 override Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse.Equals(object? obj) -> bool
 override Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse.GetHashCode() -> int
 override Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse.ToString() -> string!
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits.Equals(object? obj) -> bool
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits.GetHashCode() -> int
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits.ToString() -> string!
 override Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.Equals(object? obj) -> bool
 override Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.GetHashCode() -> int
 override Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.ToString() -> string!
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit.Equals(object? obj) -> bool
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit.GetHashCode() -> int
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit.ToString() -> string!
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits.Equals(object? obj) -> bool
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits.GetHashCode() -> int
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits.ToString() -> string!
 override Snail.Toolkit.AI.Ollama.Contracts.Responses.SystemOneResponse.Equals(object? obj) -> bool
 override Snail.Toolkit.AI.Ollama.Contracts.Responses.SystemOneResponse.GetHashCode() -> int
 override Snail.Toolkit.AI.Ollama.Contracts.Responses.SystemOneResponse.ToString() -> string!
 override Snail.Toolkit.AI.Ollama.Contracts.Responses.ThinkingLevels.Equals(object? obj) -> bool
 override Snail.Toolkit.AI.Ollama.Contracts.Responses.ThinkingLevels.GetHashCode() -> int
 override Snail.Toolkit.AI.Ollama.Contracts.Responses.ThinkingLevels.ToString() -> string!
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket!
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket.Equals(object? obj) -> bool
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket.GetHashCode() -> int
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket.ToString() -> string!
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup!
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup.Equals(object? obj) -> bool
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup.GetHashCode() -> int
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup.ToString() -> string!
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.Equals(object? obj) -> bool
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.GetHashCode() -> int
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.ToString() -> string!
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.Equals(object? obj) -> bool
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.GetHashCode() -> int
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.ToString() -> string!
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary!
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary.EqualityContract.get -> System.Type!
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary.Equals(object? obj) -> bool
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary.GetHashCode() -> int
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary.PrintMembers(System.Text.StringBuilder! builder) -> bool
+override Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary.ToString() -> string!
 override Snail.Toolkit.AI.Ollama.Contracts.Schema.ChatMessage.Equals(object? obj) -> bool
 override Snail.Toolkit.AI.Ollama.Contracts.Schema.ChatMessage.GetHashCode() -> int
 override Snail.Toolkit.AI.Ollama.Contracts.Schema.ChatMessage.ToString() -> string!
@@ -563,6 +743,9 @@ override Snail.Toolkit.AI.Ollama.Contracts.Schema.TopLogProb.GetHashCode() -> in
 override Snail.Toolkit.AI.Ollama.Contracts.Schema.TopLogProb.ToString() -> string!
 override sealed Snail.Toolkit.AI.Ollama.Contracts.Requests.ChatRequest.Equals(Snail.Toolkit.AI.Ollama.Contracts.Requests.RequestBase? other) -> bool
 override sealed Snail.Toolkit.AI.Ollama.Contracts.Requests.GenerateRequest.Equals(Snail.Toolkit.AI.Ollama.Contracts.Requests.RequestBase? other) -> bool
+override sealed Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket.Equals(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary? other) -> bool
+override sealed Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup.Equals(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics? other) -> bool
+override sealed Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary.Equals(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics? other) -> bool
 override sealed Snail.Toolkit.AI.Ollama.Contracts.Schema.ChoiceAnswer.Equals(Snail.Toolkit.AI.Ollama.Contracts.Schema.SystemOneAnswer? other) -> bool
 override sealed Snail.Toolkit.AI.Ollama.Contracts.Schema.ChoiceQuestion.Equals(Snail.Toolkit.AI.Ollama.Contracts.Schema.SystemOneQuestion? other) -> bool
 override sealed Snail.Toolkit.AI.Ollama.Contracts.Schema.NoulAnswer.Equals(Snail.Toolkit.AI.Ollama.Contracts.Schema.SystemOneAnswer? other) -> bool
@@ -581,14 +764,36 @@ static Snail.Toolkit.AI.Ollama.Contracts.Requests.RequestBase.operator !=(Snail.
 static Snail.Toolkit.AI.Ollama.Contracts.Requests.RequestBase.operator ==(Snail.Toolkit.AI.Ollama.Contracts.Requests.RequestBase? left, Snail.Toolkit.AI.Ollama.Contracts.Requests.RequestBase? right) -> bool
 static Snail.Toolkit.AI.Ollama.Contracts.Requests.SystemOneRequest.operator !=(Snail.Toolkit.AI.Ollama.Contracts.Requests.SystemOneRequest? left, Snail.Toolkit.AI.Ollama.Contracts.Requests.SystemOneRequest? right) -> bool
 static Snail.Toolkit.AI.Ollama.Contracts.Requests.SystemOneRequest.operator ==(Snail.Toolkit.AI.Ollama.Contracts.Requests.SystemOneRequest? left, Snail.Toolkit.AI.Ollama.Contracts.Requests.SystemOneRequest? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery.operator !=(Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery? left, Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery.operator ==(Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery? left, Snail.Toolkit.AI.Ollama.Contracts.Requests.UsageQuery? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance.operator !=(Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance.operator ==(Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.Balance? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod.operator !=(Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod.operator ==(Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.CreditPeriod? right) -> bool
 static Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse.operator !=(Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse? right) -> bool
 static Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse.operator ==(Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits.operator !=(Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits.operator ==(Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.IncludedCredits? right) -> bool
 static Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.operator !=(Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription? right) -> bool
 static Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription.operator ==(Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.ModelDescription? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit.operator !=(Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit.operator ==(Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.PlanLimit? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits.operator !=(Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits.operator ==(Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.PurchasedCredits? right) -> bool
 static Snail.Toolkit.AI.Ollama.Contracts.Responses.SystemOneResponse.operator !=(Snail.Toolkit.AI.Ollama.Contracts.Responses.SystemOneResponse? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.SystemOneResponse? right) -> bool
 static Snail.Toolkit.AI.Ollama.Contracts.Responses.SystemOneResponse.operator ==(Snail.Toolkit.AI.Ollama.Contracts.Responses.SystemOneResponse? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.SystemOneResponse? right) -> bool
 static Snail.Toolkit.AI.Ollama.Contracts.Responses.ThinkingLevels.operator !=(Snail.Toolkit.AI.Ollama.Contracts.Responses.ThinkingLevels? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.ThinkingLevels? right) -> bool
 static Snail.Toolkit.AI.Ollama.Contracts.Responses.ThinkingLevels.operator ==(Snail.Toolkit.AI.Ollama.Contracts.Responses.ThinkingLevels? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.ThinkingLevels? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket.operator !=(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket.operator ==(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageBucket? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup.operator !=(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup.operator ==(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageGroup? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.operator !=(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.operator ==(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.operator !=(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport.operator ==(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageReport? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary.operator !=(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary? right) -> bool
+static Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary.operator ==(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary? left, Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary? right) -> bool
 static Snail.Toolkit.AI.Ollama.Contracts.Schema.ChatMessage.operator !=(Snail.Toolkit.AI.Ollama.Contracts.Schema.ChatMessage? left, Snail.Toolkit.AI.Ollama.Contracts.Schema.ChatMessage? right) -> bool
 static Snail.Toolkit.AI.Ollama.Contracts.Schema.ChatMessage.operator ==(Snail.Toolkit.AI.Ollama.Contracts.Schema.ChatMessage? left, Snail.Toolkit.AI.Ollama.Contracts.Schema.ChatMessage? right) -> bool
 static Snail.Toolkit.AI.Ollama.Contracts.Schema.ChoiceAnswer.operator !=(Snail.Toolkit.AI.Ollama.Contracts.Schema.ChoiceAnswer? left, Snail.Toolkit.AI.Ollama.Contracts.Schema.ChoiceAnswer? right) -> bool
@@ -648,6 +853,11 @@ virtual Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse.<Clone>$(
 virtual Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse.EqualityContract.get -> System.Type!
 virtual Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse.Equals(Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse? other) -> bool
 virtual Snail.Toolkit.AI.Ollama.Contracts.Responses.EmbeddingsResponse.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics!
+virtual Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.EqualityContract.get -> System.Type!
+virtual Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.Equals(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics? other) -> bool
+virtual Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageMetrics.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary.Equals(Snail.Toolkit.AI.Ollama.Contracts.Responses.UsageSummary? other) -> bool
 virtual Snail.Toolkit.AI.Ollama.Contracts.Schema.ChatMessage.<Clone>$() -> Snail.Toolkit.AI.Ollama.Contracts.Schema.ChatMessage!
 virtual Snail.Toolkit.AI.Ollama.Contracts.Schema.ChatMessage.EqualityContract.get -> System.Type!
 virtual Snail.Toolkit.AI.Ollama.Contracts.Schema.ChatMessage.Equals(Snail.Toolkit.AI.Ollama.Contracts.Schema.ChatMessage? other) -> bool
